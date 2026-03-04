@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Sky blue top half -->
+    <item
+        android:bottom="54dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#81D4FA" />
+        </shape>
+    </item>
+
+    <!-- Sand bottom half -->
+    <item
+        android:top="54dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#F5E8C7" />
+        </shape>
+    </item>
+
+</layer-list>

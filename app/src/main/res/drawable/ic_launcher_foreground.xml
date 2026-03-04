@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sun -->
+    <path
+        android:fillColor="#FFCA28"
+        android:pathData="M81,27 A18,18 0 1,0 81,81 A18,18 0 1,0 81,27 Z" />
+
+    <!-- Wave/horizon line -->
+    <path
+        android:fillColor="#0288D1"
+        android:pathData="
+            M 0,70
+            Q 27,54 54,70
+            Q 81,86 108,70
+            L 108,108
+            L 0,108 Z" />
+</vector>
