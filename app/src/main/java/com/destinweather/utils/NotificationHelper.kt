@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.destinweather.MainActivity
+import com.destinweather.R
 
 object NotificationHelper {
 
@@ -50,8 +51,8 @@ object NotificationHelper {
             else -> 0xFFFBC02D.toInt()
         }
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("⚠️ $event")
             .setContentText(headline ?: "Check for details")
             .setStyle(NotificationCompat.BigTextStyle()
@@ -62,11 +63,10 @@ object NotificationHelper {
             .setContentIntent(pendingIntent)
             .setColor(color)
             .setVibrate(longArrayOf(0, 500, 200, 500))
-            .build()
 
         try {
-            NotificationManagerCompat.from(context).notify(alertId.hashCode(), notification)
-        } catch (e: SecurityException) {
+            NotificationManagerCompat.from(context).notify(alertId.hashCode(), builder.build())
+        } catch (_: SecurityException) {
             // Permission not granted
         }
     }
