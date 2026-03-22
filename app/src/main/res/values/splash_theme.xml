@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.DestinWeather.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1E88E5</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.DestinWeather</item>
+    </style>
+
+    <style name="Theme.DestinWeather" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#1a1a2e</item>
+        <item name="android:navigationBarColor">#1a1a2e</item>
+    </style>
+</resources>

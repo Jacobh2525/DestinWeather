@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.DestinWeather" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Main theme is now defined in splash_theme.xml to avoid duplication -->
 </resources>

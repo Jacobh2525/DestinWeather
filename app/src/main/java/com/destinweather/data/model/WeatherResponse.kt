@@ -13,12 +13,15 @@ data class WeatherResponse(
 
 data class MainWeather(
     @SerializedName("temp") val temp: Double,
+    @SerializedName("temp_min") val tempMin: Double?,
+    @SerializedName("temp_max") val tempMax: Double?,
     @SerializedName("feels_like") val feelsLike: Double,
     @SerializedName("humidity") val humidity: Int,
     @SerializedName("pressure") val pressure: Int
 )
 
 data class Weather(
+    @SerializedName("id") val id: Int,
     @SerializedName("main") val main: String,
     @SerializedName("description") val description: String,
     @SerializedName("icon") val icon: String

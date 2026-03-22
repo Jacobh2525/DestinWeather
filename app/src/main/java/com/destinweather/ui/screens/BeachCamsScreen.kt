@@ -60,7 +60,7 @@ fun BeachCamsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1a1a2e))
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         // Header
@@ -68,13 +68,13 @@ fun BeachCamsScreen() {
             text = "Beach Cams",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             text = "Destin, FL - Tap to watch live",
             fontSize = 14.sp,
-            color = Color.White.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -107,7 +107,7 @@ fun BeachCamCard(cam: BeachCam) {
             },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
@@ -124,12 +124,12 @@ fun BeachCamCard(cam: BeachCam) {
                         text = cam.name,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1a1a2e)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = cam.location,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
                 // Live indicator
@@ -169,7 +169,7 @@ fun BeachCamCard(cam: BeachCam) {
                 Surface(
                     modifier = Modifier.size(60.dp),
                     shape = CircleShape,
-                    color = Color.Red.copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -177,7 +177,7 @@ fun BeachCamCard(cam: BeachCam) {
                         modifier = Modifier
                             .padding(12.dp)
                             .fillMaxSize(),
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -190,7 +190,7 @@ fun BeachCamCard(cam: BeachCam) {
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
     }

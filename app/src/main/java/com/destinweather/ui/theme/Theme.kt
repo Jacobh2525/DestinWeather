@@ -9,35 +9,41 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Blue200,
+    secondary = LightBlue200,
+    tertiary = Blue100,
+    background = Color(0xFF0D1B2A),
+    surface = Color(0xFF1B263B),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color(0xFFE0E1DD),
+    onSurface = Color(0xFFE0E1DD),
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
+    primary = Color.White,
+    secondary = Color(0xFF81D4FA),
+    tertiary = Color(0xFF4FC3F7),
+    background = Color(0xFF001E3C), // Deep Dark Navy Blue
+    surface = Color.White.copy(alpha = 0.1f),
+    onPrimary = Color(0xFF001E3C),
+    onSecondary = Color(0xFF001E3C),
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = Color.White,    // High contrast white font
+    onSurface = Color.White,
+    surfaceVariant = Color(0xFF000D1A), // Even darker navy for gradient
+    onSurfaceVariant = Color.White,
 )
 
 @Composable
 fun DestinWeatherTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

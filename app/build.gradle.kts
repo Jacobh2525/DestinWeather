@@ -54,6 +54,7 @@ tasks.register("cleanGhostFiles") {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -73,6 +74,10 @@ dependencies {
     implementation(libs.youtube.player)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation("androidx.core:core-splashscreen:1.2.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.1")
+    implementation("androidx.core:core-ktx:1.18.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
 
     // Networking
     implementation(libs.retrofit)

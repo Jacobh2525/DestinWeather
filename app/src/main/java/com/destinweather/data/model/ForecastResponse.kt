@@ -12,10 +12,16 @@ data class ForecastItem(
     @SerializedName("main") val main: MainWeather,
     @SerializedName("weather") val weather: List<Weather>,
     @SerializedName("wind") val wind: Wind,
-    @SerializedName("dt_txt") val dtTxt: String
+    @SerializedName("dt_txt") val dtTxt: String,
+    @SerializedName("clouds") val clouds: Clouds?,
+    @SerializedName("pop") val pop: Double?
 )
 
 data class City(
     @SerializedName("name") val name: String,
     @SerializedName("country") val country: String
+)
+
+data class Clouds(
+    @SerializedName("all") val all: Int
 )
