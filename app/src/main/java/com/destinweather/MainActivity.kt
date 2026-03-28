@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -86,7 +88,7 @@ class MainActivity : ComponentActivity() {
                 BottomNavItem("Surf", Icons.Default.Waves, Icons.Outlined.Waves),
                 BottomNavItem("Alerts", Icons.Default.Warning, Icons.Outlined.Warning),
                 BottomNavItem("Radar", Icons.Default.Radar, Icons.Outlined.Radar),
-                BottomNavItem("Forecast", Icons.Default.Article, Icons.Outlined.Article),
+                BottomNavItem("Forecast", Icons.AutoMirrored.Filled.Article, Icons.AutoMirrored.Outlined.Article),
                 BottomNavItem("Cams", Icons.Default.Videocam, Icons.Outlined.Videocam)
             )
 
