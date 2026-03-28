@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace = "com.destinweather"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.destinweather"
@@ -64,6 +60,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.material.icons.extended)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.webkit)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,14 +70,9 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    
     implementation(libs.youtube.player)
     implementation(libs.compose.foundation)
-    implementation(libs.compose.material3)
-    implementation("androidx.core:core-splashscreen:1.2.0")
-    implementation("androidx.work:work-runtime-ktx:2.11.1")
-    implementation("androidx.core:core-ktx:1.18.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.webkit:webkit:1.15.0")
 
     // Networking
     implementation(libs.retrofit)
