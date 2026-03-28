@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.1")
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.webkit:webkit:1.15.0")
 
     // Networking
     implementation(libs.retrofit)

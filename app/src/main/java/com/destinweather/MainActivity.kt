@@ -26,6 +26,7 @@ import com.destinweather.ui.screens.AlertsScreen
 import com.destinweather.ui.screens.BeachCamsScreen
 import com.destinweather.ui.screens.LocationPickerSheet
 import com.destinweather.ui.screens.NoaaForecastScreen
+import com.destinweather.ui.screens.RadarScreen
 import com.destinweather.ui.screens.SurfScreen
 import com.destinweather.ui.screens.WeatherScreen
 import com.destinweather.utils.NotificationHelper
@@ -84,6 +85,7 @@ class MainActivity : ComponentActivity() {
                 BottomNavItem("Weather", Icons.Default.Cloud, Icons.Outlined.Cloud),
                 BottomNavItem("Surf", Icons.Default.Waves, Icons.Outlined.Waves),
                 BottomNavItem("Alerts", Icons.Default.Warning, Icons.Outlined.Warning),
+                BottomNavItem("Radar", Icons.Default.Radar, Icons.Outlined.Radar),
                 BottomNavItem("Forecast", Icons.Default.Article, Icons.Outlined.Article),
                 BottomNavItem("Cams", Icons.Default.Videocam, Icons.Outlined.Videocam)
             )
@@ -145,11 +147,14 @@ class MainActivity : ComponentActivity() {
                                 viewModel = alertsViewModel,
                                 onLocationClick = { showLocationPicker = true }
                             )
-                            3 -> NoaaForecastScreen(
+                            3 -> RadarScreen(
+                                onLocationClick = { showLocationPicker = true }
+                            )
+                            4 -> NoaaForecastScreen(
                                 viewModel = noaaViewModel,
                                 onLocationClick = { showLocationPicker = true }
                             )
-                            4 -> BeachCamsScreen()
+                            5 -> BeachCamsScreen()
                         }
                     }
                 }
