@@ -38,6 +38,7 @@ import com.destinweather.ui.screens.SettingsScreen
 import com.destinweather.ui.screens.SurfScreen
 import com.destinweather.ui.screens.WeatherScreen
 import com.destinweather.utils.NotificationHelper
+import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.AlertsViewModel
 import com.destinweather.viewmodel.NoaaViewModel
 import com.destinweather.viewmodel.SurfViewModel
@@ -50,8 +51,8 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-            AlertCheckWorker.schedule(this, 30.3935, -86.4958)
+        if (isGranted && PreferencesManager.notificationsEnabled) {
+            AlertCheckWorker.schedule(this, PreferencesManager.lastLat, PreferencesManager.lastLon)
         }
     }
 
@@ -62,7 +63,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Initialize preferences
+        PreferencesManager.init(this)
+
+        // Create notification channel
         NotificationHelper.createNotificationChannel(this)
+
+        // Request notification permission on Android 13+
         requestNotificationPermission()
 
         setContent {
@@ -83,8 +90,9 @@ class MainActivity : ComponentActivity() {
 
             var showLocationPicker by remember { mutableStateOf(false) }
             val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-            var lastLat = 30.3935
-            var lastLon = -86.4958
+
+            val lastLat = PreferencesManager.lastLat
+            val lastLon = PreferencesManager.lastLon
 
             val items = listOf(
                 BottomNavItem("Weather", Icons.Default.Cloud, Icons.Outlined.Cloud),
@@ -95,7 +103,6 @@ class MainActivity : ComponentActivity() {
                 BottomNavItem("Cams", Icons.Default.Videocam, Icons.Outlined.Videocam)
             )
 
-            // Page count = screens + settings
             val pageCount = items.size + 1
             val pagerState = rememberPagerState(pageCount = { pageCount })
             val coroutineScope = rememberCoroutineScope()
@@ -126,13 +133,12 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(32.dp))
 
-                            // Settings in drawer
                             DrawerItem(
                                 icon = Icons.Default.Settings,
                                 title = "Settings",
                                 onClick = {
                                     coroutineScope.launch {
-                                        pagerState.animateScrollToPage(items.size) // Last page = Settings
+                                        pagerState.animateScrollToPage(items.size)
                                         drawerState.close()
                                     }
                                 }
@@ -143,7 +149,6 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
 
-                            // Navigation items
                             items.forEachIndexed { index, item ->
                                 DrawerItem(
                                     icon = item.selectedIcon,
@@ -173,7 +178,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { 
+                                IconButton(onClick = {
                                     coroutineScope.launch { drawerState.open() }
                                 }) {
                                     Icon(
@@ -194,7 +199,6 @@ class MainActivity : ComponentActivity() {
                             containerColor = Color(0xFF1a1a2e),
                             contentColor = Color.White
                         ) {
-                            // Show only main items in bottom nav (not settings)
                             items.forEachIndexed { index, item ->
                                 val selected = pagerState.currentPage == index
 
@@ -251,7 +255,7 @@ class MainActivity : ComponentActivity() {
                                     onLocationClick = { showLocationPicker = true }
                                 )
                                 5 -> BeachCamsScreen()
-                                6 -> SettingsScreen() // Settings page!
+                                6 -> SettingsScreen()
                             }
                         }
                     }
@@ -266,16 +270,24 @@ class MainActivity : ComponentActivity() {
                         surfViewModel.setLocation(location)
                         noaaViewModel.setLocation(lat, lon)
                         alertsViewModel.setLocation(lat, lon)
-                        lastLat = lat
-                        lastLon = lon
-                        AlertCheckWorker.schedule(this, lat, lon)
+
+                        // Save location preference
+                        PreferencesManager.lastLocation = location
+                        PreferencesManager.lastLat = lat
+                        PreferencesManager.lastLon = lon
+
+                        if (PreferencesManager.notificationsEnabled) {
+                            AlertCheckWorker.schedule(this, lat, lon)
+                        }
                     },
                     onDismiss = { showLocationPicker = false }
                 )
             }
 
             LaunchedEffect(Unit) {
-                AlertCheckWorker.schedule(this@MainActivity, lastLat, lastLon)
+                if (PreferencesManager.notificationsEnabled) {
+                    AlertCheckWorker.schedule(this@MainActivity, lastLat, lastLon)
+                }
             }
         }
     }
@@ -287,14 +299,18 @@ class MainActivity : ComponentActivity() {
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED -> {
-                    AlertCheckWorker.schedule(this, 30.3935, -86.4958)
+                    if (PreferencesManager.notificationsEnabled) {
+                        AlertCheckWorker.schedule(this, PreferencesManager.lastLat, PreferencesManager.lastLon)
+                    }
                 }
                 else -> {
                     requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         } else {
-            AlertCheckWorker.schedule(this, 30.3935, -86.4958)
+            if (PreferencesManager.notificationsEnabled) {
+                AlertCheckWorker.schedule(this, PreferencesManager.lastLat, PreferencesManager.lastLon)
+            }
         }
     }
 }

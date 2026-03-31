@@ -13,16 +13,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.destinweather.utils.PreferencesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
-    var useFahrenheit by remember { mutableStateOf(true) }
-    var notificationsEnabled by remember { mutableStateOf(true) }
-    var darkModeEnabled by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    var useFahrenheit by remember {
+        mutableStateOf(PreferencesManager.useFahrenheit)
+    }
+    var notificationsEnabled by remember {
+        mutableStateOf(PreferencesManager.notificationsEnabled)
+    }
+    var darkModeEnabled by remember {
+        mutableStateOf(PreferencesManager.darkModeEnabled)
+    }
 
     Box(
         modifier = Modifier
@@ -71,7 +81,10 @@ fun SettingsScreen() {
                     )
                     Switch(
                         checked = useFahrenheit,
-                        onCheckedChange = { useFahrenheit = it },
+                        onCheckedChange = {
+                            useFahrenheit = it
+                            PreferencesManager.useFahrenheit = it
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF64B5F6),
@@ -102,7 +115,10 @@ fun SettingsScreen() {
                     )
                     Switch(
                         checked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it },
+                        onCheckedChange = {
+                            notificationsEnabled = it
+                            PreferencesManager.notificationsEnabled = it
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF64B5F6),
@@ -133,7 +149,10 @@ fun SettingsScreen() {
                     )
                     Switch(
                         checked = darkModeEnabled,
-                        onCheckedChange = { darkModeEnabled = it },
+                        onCheckedChange = {
+                            darkModeEnabled = it
+                            PreferencesManager.darkModeEnabled = it
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = Color(0xFF64B5F6),
@@ -167,7 +186,7 @@ fun SettingsScreen() {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Data sources: OpenWeatherMap, NOAA, Surfline",
+                        text = "Data sources: OpenWeatherMap, NOAA",
                         color = Color.White.copy(alpha = 0.5f),
                         fontSize = 11.sp
                     )
