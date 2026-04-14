@@ -41,6 +41,7 @@ import com.destinweather.utils.NotificationHelper
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.AlertsViewModel
 import com.destinweather.viewmodel.NoaaViewModel
+import com.destinweather.viewmodel.RadarViewModel
 import com.destinweather.viewmodel.SurfViewModel
 import com.destinweather.viewmodel.WeatherViewModel
 import com.destinweather.workers.AlertCheckWorker
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
             val surfViewModel: SurfViewModel = viewModel()
             val noaaViewModel: NoaaViewModel = viewModel()
             val alertsViewModel: AlertsViewModel = viewModel()
+            val radarViewModel: RadarViewModel = viewModel()
             val currentLocation by weatherViewModel.currentLocation.collectAsState()
 
             var showLocationPicker by remember { mutableStateOf(false) }
@@ -248,6 +250,7 @@ class MainActivity : ComponentActivity() {
                                     onLocationClick = { showLocationPicker = true }
                                 )
                                 3 -> RadarScreen(
+                                    viewModel = radarViewModel,
                                     onLocationClick = { showLocationPicker = true }
                                 )
                                 4 -> NoaaForecastScreen(
@@ -270,6 +273,7 @@ class MainActivity : ComponentActivity() {
                         surfViewModel.setLocation(location)
                         noaaViewModel.setLocation(lat, lon)
                         alertsViewModel.setLocation(lat, lon)
+                        radarViewModel.setLocation(lat, lon)
 
                         // Save location preference
                         PreferencesManager.lastLocation = location
