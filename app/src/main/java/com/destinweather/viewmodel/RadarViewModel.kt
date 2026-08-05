@@ -1,6 +1,5 @@
 package com.destinweather.viewmodel
 
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.destinweather.data.repository.RadarRepository
@@ -23,9 +22,9 @@ sealed class RadarState {
 }
 
 data class RadarFrame(
-    val timestamp: Int,
-    val bitmap: Bitmap? = null,
-    val isLoaded: Boolean = false
+    val time: Int,
+    val path: String,
+    val isNowcast: Boolean = false
 )
 
 class RadarViewModel : ViewModel() {
@@ -41,7 +40,7 @@ class RadarViewModel : ViewModel() {
     val currentLocation: StateFlow<Pair<Double, Double>> = _currentLocation
 
     private var animationJob: Job? = null
-    private val animationDelayMs = 500L // 500ms between frames
+    private val animationDelayMs = 500L
 
     init {
         fetchRadarData()
@@ -52,28 +51,23 @@ class RadarViewModel : ViewModel() {
             _radarState.value = RadarState.Loading
 
             try {
-                // Fetch available timestamps from RainViewer
-                val timestampsResult = repository.fetchRadarTimestamps()
+                val result = repository.fetchRadarTimestamps()
 
-                timestampsResult.fold(
-                    onSuccess = { timestamps ->
-                        if (timestamps.isEmpty()) {
+                result.fold(
+                    onSuccess = { frames ->
+                        if (frames.isEmpty()) {
                             _radarState.value = RadarState.Error("No radar data available")
                             return@launch
                         }
 
-                        // Create frames from timestamps (use last 10 frames)
-                        val recentTimestamps = timestamps.takeLast(10)
-                        val frames = recentTimestamps.map { RadarFrame(timestamp = it) }
+                        // Start at "Now" (last past frame), not the future frames
+                        val nowIndex = frames.indexOfLast { !it.isNowcast }.coerceAtLeast(0)
 
                         _radarState.value = RadarState.Success(
                             frames = frames,
-                            currentIndex = frames.size - 1,
+                            currentIndex = nowIndex,
                             isPlaying = false
                         )
-
-                        // Preload the current frame
-                        loadRadarFrame(frames.size - 1)
                     },
                     onFailure = { error ->
                         _radarState.value = RadarState.Error(error.message ?: "Failed to load radar data")
@@ -85,39 +79,8 @@ class RadarViewModel : ViewModel() {
         }
     }
 
-    private fun loadRadarFrame(index: Int) {
-        val currentState = _radarState.value
-        if (currentState !is RadarState.Success) return
-
-        val frames = currentState.frames.toMutableList()
-        if (index >= frames.size || frames[index].isLoaded) return
-
-        viewModelScope.launch {
-            val (lat, lon) = _currentLocation.value
-            val timestamp = frames[index].timestamp
-
-            // Calculate tile coordinates for current zoom level (let's use zoom level 6)
-            val zoom = 6
-            val (x, y) = latLonToTileXY(lat, lon, zoom)
-
-            val result = repository.fetchRainViewerTile(zoom, x, y, timestamp)
-
-            result.fold(
-                onSuccess = { bitmap ->
-                    frames[index] = frames[index].copy(
-                        bitmap = bitmap,
-                        isLoaded = true
-                    )
-                    _radarState.value = currentState.copy(frames = frames)
-                },
-                onFailure = { /* Silently fail - image will be null */ }
-            )
-        }
-    }
-
     fun setLocation(lat: Double, lon: Double) {
         _currentLocation.value = Pair(lat, lon)
-        // Reload radar data for new location
         fetchRadarData()
     }
 
@@ -144,12 +107,10 @@ class RadarViewModel : ViewModel() {
 
             while (isActive) {
                 delay(animationDelayMs)
-
                 index = (index + 1) % currentState.frames.size
-                _radarState.value = currentState.copy(currentIndex = index)
-
-                // Preload next frame if not loaded
-                loadRadarFrame((index + 1) % currentState.frames.size)
+                _radarState.value = _radarState.value.let {
+                    if (it is RadarState.Success) it.copy(currentIndex = index) else it
+                }
             }
         }
     }
@@ -170,16 +131,13 @@ class RadarViewModel : ViewModel() {
 
         val clampedIndex = index.coerceIn(0, currentState.frames.size - 1)
         _radarState.value = currentState.copy(currentIndex = clampedIndex)
-
-        // Load this frame if not already loaded
-        loadRadarFrame(clampedIndex)
     }
 
     fun getCurrentTimestamp(): String {
         val currentState = _radarState.value
         if (currentState !is RadarState.Success) return ""
 
-        val timestamp = currentState.frames.getOrNull(currentState.currentIndex)?.timestamp ?: return ""
+        val timestamp = currentState.frames.getOrNull(currentState.currentIndex)?.time ?: return ""
         return formatTimestamp(timestamp)
     }
 
@@ -187,17 +145,6 @@ class RadarViewModel : ViewModel() {
         val date = java.util.Date(timestamp * 1000L)
         val formatter = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
         return formatter.format(date)
-    }
-
-    /**
-     * Convert latitude/longitude to tile coordinates
-     */
-    private fun latLonToTileXY(lat: Double, lon: Double, zoom: Int): Pair<Int, Int> {
-        val n = 1 shl zoom
-        val x = ((lon + 180.0) / 360.0 * n).toInt()
-        val latRad = Math.toRadians(lat)
-        val y = ((1.0 - kotlin.math.ln(kotlin.math.tan(latRad) + 1 / kotlin.math.cos(latRad)) / kotlin.math.PI) / 2.0 * n).toInt()
-        return Pair(x, y)
     }
 
     override fun onCleared() {

@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.destinweather"
-        minSdk = 24
+        minSdk = 25
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -90,4 +90,7 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // MapLibre (radar screen)
+    implementation(libs.ramani.maps)
 }

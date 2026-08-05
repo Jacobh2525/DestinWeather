@@ -1,11 +1,8 @@
 package com.destinweather.ui.screens
 
-import android.graphics.Bitmap
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,30 +13,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.network.HttpException
-import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.RadarFrame
 import com.destinweather.viewmodel.RadarState
 import com.destinweather.viewmodel.RadarViewModel
-import kotlinx.coroutines.launch
-import kotlin.math.max
-import kotlin.math.min
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.Style
+import org.maplibre.android.style.layers.Property
+import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.RasterLayer
+import org.maplibre.android.style.sources.RasterSource
+import org.maplibre.android.style.sources.TileSet
+import org.ramani.compose.*
+
+private const val RADAR_COLOR_SCHEME = "2"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,11 +42,6 @@ fun RadarScreen(
 ) {
     val radarState by viewModel.radarState.collectAsState()
     val currentLocation by viewModel.currentLocation.collectAsState()
-
-    // Map state
-    var scale by remember { mutableStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -69,7 +57,6 @@ fun RadarScreen(
             )
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             RadarHeader(
                 timestamp = if (radarState is RadarState.Success) {
                     viewModel.getCurrentTimestamp()
@@ -82,7 +69,6 @@ fun RadarScreen(
                 onLocationClick = onLocationClick
             )
 
-            // Radar Map
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,33 +83,12 @@ fun RadarScreen(
                         RadarLoadingContent()
                     }
                     is RadarState.Success -> {
-                        RadarMap(
-                            frames = state.frames,
-                            currentIndex = state.currentIndex,
-                            scale = scale,
-                            offset = offset,
-                            onScaleChange = { scale = it },
-                            onOffsetChange = { offset = it },
-                            location = currentLocation
-                        )
-
-                        // Frame slider
-                        RadarTimeline(
+                        RadarMapContent(
                             frames = state.frames,
                             currentIndex = state.currentIndex,
                             isPlaying = state.isPlaying,
+                            location = currentLocation,
                             onSeek = { viewModel.seekToFrame(it) }
-                        )
-
-                        // Zoom controls
-                        RadarZoomControls(
-                            currentScale = scale,
-                            onZoomIn = { scale = min(scale * 1.2f, 5f) },
-                            onZoomOut = { scale = max(scale / 1.2f, 0.5f) },
-                            onReset = {
-                                scale = 1f
-                                offset = Offset.Zero
-                            }
                         )
                     }
                     is RadarState.Error -> {
@@ -135,6 +100,115 @@ fun RadarScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RadarMapContent(
+    frames: List<RadarFrame>,
+    currentIndex: Int,
+    isPlaying: Boolean,
+    location: Pair<Double, Double>,
+    onSeek: (Int) -> Unit
+) {
+    val (lat, lon) = location
+
+    val cameraPositionState = rememberCameraPositionState(
+        CameraPosition(LatLng(lat, lon), 8.0)
+    )
+
+    LaunchedEffect(lat, lon) {
+        cameraPositionState.position = CameraPosition(LatLng(lat, lon), 8.0)
+    }
+
+    // Build tile URL per frame (RainViewer radar only supports zoom 0-7;
+    // above that they return an error IMAGE, so TileSet must cap maxZoom at 7.
+    // 512px tiles = 2x sharper radar, matching MapLibre's default raster tileSize)
+    fun radarUrl(frame: RadarFrame) =
+        "https://tilecache.rainviewer.com${frame.path}/512/{z}/{x}/{y}/$RADAR_COLOR_SCHEME/1_1.png"
+
+    // Track loaded style and which frame set is applied
+    var loadedStyle by remember { mutableStateOf<Style?>(null) }
+    var appliedFrameKey by remember { mutableStateOf<String?>(null) }
+    var lastVisibleIndex by remember { mutableIntStateOf(-1) }
+
+    val frameKey = frames.firstOrNull()?.path
+
+    // Add one hidden source+layer per frame; recreate when frames refresh
+    LaunchedEffect(frameKey, loadedStyle) {
+        val style = loadedStyle ?: return@LaunchedEffect
+        val key = frameKey ?: return@LaunchedEffect
+        if (key == appliedFrameKey) return@LaunchedEffect
+
+        // Remove previous radar layers/sources
+        for (i in 0 until 20) {
+            try { style.removeLayer("radar-layer-$i") } catch (_: Exception) {}
+            try { style.removeSource("radar-source-$i") } catch (_: Exception) {}
+        }
+
+        frames.forEachIndexed { index, frame ->
+            val tileSet = TileSet("2.2.0", radarUrl(frame))
+            tileSet.maxZoom = 7f
+            val source = RasterSource("radar-source-$index", tileSet)
+            style.addSource(source)
+            val layer = RasterLayer("radar-layer-$index", "radar-source-$index")
+            layer.setProperties(
+                PropertyFactory.rasterOpacity(0.8f),
+                PropertyFactory.visibility(Property.NONE)
+            )
+            style.addLayer(layer)
+        }
+
+        appliedFrameKey = key
+        lastVisibleIndex = -1
+    }
+
+    // Toggle visibility on frame change (instant - tiles stay cached per source)
+    LaunchedEffect(currentIndex, appliedFrameKey) {
+        val style = loadedStyle ?: return@LaunchedEffect
+        if (appliedFrameKey == null) return@LaunchedEffect
+
+        if (lastVisibleIndex >= 0 && lastVisibleIndex != currentIndex) {
+            try {
+                style.getLayer("radar-layer-$lastVisibleIndex")
+                    ?.setProperties(PropertyFactory.visibility(Property.NONE))
+            } catch (_: Exception) {}
+        }
+        try {
+            style.getLayer("radar-layer-$currentIndex")
+                ?.setProperties(PropertyFactory.visibility(Property.VISIBLE))
+        } catch (_: Exception) {}
+        lastVisibleIndex = currentIndex
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        MapLibre(
+            modifier = Modifier.fillMaxSize(),
+            style = MapStyle.Uri("https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"),
+            cameraPositionState = cameraPositionState,
+            uiSettings = UiSettings(
+                zoomGesturesEnabled = true,
+                scrollGesturesEnabled = true,
+                rotateGesturesEnabled = false,
+                tiltGesturesEnabled = false,
+                isAttributionEnabled = false,
+                isLogoEnabled = false
+            ),
+            properties = MapProperties(
+                minZoom = 2.0,
+                maxZoom = 12.0
+            ),
+            onStyleLoaded = { style ->
+                loadedStyle = style
+            }
+        )
+
+        RadarTimeline(
+            frames = frames,
+            currentIndex = currentIndex,
+            isPlaying = isPlaying,
+            onSeek = onSeek
+        )
     }
 }
 
@@ -219,151 +293,15 @@ private fun RadarHeader(
 }
 
 @Composable
-private fun RadarMap(
-    frames: List<RadarFrame>,
-    currentIndex: Int,
-    scale: Float,
-    offset: Offset,
-    onScaleChange: (Float) -> Unit,
-    onOffsetChange: (Offset) -> Unit,
-    location: Pair<Double, Double>
-) {
-    val currentFrame = frames.getOrNull(currentIndex)
-    val scope = rememberCoroutineScope()
-
-    // Load the radar image using Coil
-    var radarBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-
-    // Build the RainViewer tile URL
-    val context = LocalContext.current
-    val (lat, lon) = location
-    val zoom = 6
-
-    // Convert lat/lon to tile coordinates
-    val (tileX, tileY) = remember(lat, lon, zoom) {
-        latLonToTileXY(lat, lon, zoom)
-    }
-
-    // Build image URL
-    val imageUrl = currentFrame?.let { frame ->
-        "https://tilecache.rainviewer.com/v2/radar/${frame.timestamp}/256/$zoom/$tileX/$tileY/2/1_1.png"
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTransformGestures { _, pan, zoomChange, _ ->
-                    onScaleChange(max(0.5f, min(5f, scale * zoomChange)))
-                    onOffsetChange(offset + pan)
-                }
-            }
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    onOffsetChange(offset + dragAmount)
-                }
-            }
-    ) {
-        // Base map (CartoDB Positron - free for commercial use, no API key needed)
-        // Alternative free tile providers that work without blocking:
-        // - CartoDB Voyager: https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png
-        // - CartoDB Positron: https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png
-        // - CartoDB Dark Matter: https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png
-        val mapUrl = "https://basemaps.cartocdn.com/rastertiles/voyager/$zoom/$tileX/$tileY.png"
-        
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(mapUrl)
-                .crossfade(true)
-                .headers(
-                    okhttp3.Headers.Builder()
-                        .add("User-Agent", "DestinWeather/1.0 (destinweather@app.com)")
-                        .build()
-                )
-                .build(),
-            contentDescription = "Base map",
-            modifier = Modifier.fillMaxSize(),
-            onError = { 
-                // If this fails, we still have the radar overlay
-            }
-        )
-
-        // Radar overlay
-        imageUrl?.let { url ->
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(url)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Radar overlay",
-                modifier = Modifier.fillMaxSize(),
-                alpha = 0.8f
-            )
-        }
-
-        // Location marker
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            LocationMarker()
-        }
-    }
-}
-
-@Composable
-private fun LocationMarker() {
-    Box(
-        modifier = Modifier
-            .size(20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        // Outer pulse ring
-        val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-        val scale by infiniteTransition.animateFloat(
-            initialValue = 1f,
-            targetValue = 1.5f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1000),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "scale"
-        )
-
-        Box(
-            modifier = Modifier
-                .size(20.dp * scale)
-                .background(
-                    Color(0xFF64B5F6).copy(alpha = 0.3f),
-                    shape = CircleShape
-                )
-        )
-
-        // Center dot
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .background(Color(0xFF64B5F6), shape = CircleShape)
-        )
-
-        // Inner dot
-        Box(
-            modifier = Modifier
-                .size(6.dp)
-                .background(Color.White, shape = CircleShape)
-        )
-    }
-}
-
-@Composable
 private fun RadarTimeline(
     frames: List<RadarFrame>,
     currentIndex: Int,
     isPlaying: Boolean,
     onSeek: (Int) -> Unit
 ) {
+    val timeFormat = remember { java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()) }
+    val lastPastIndex = frames.indexOfLast { !it.isNowcast }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,7 +325,6 @@ private fun RadarTimeline(
             )
 
             if (isPlaying) {
-                // Playing indicator
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -426,7 +363,7 @@ private fun RadarTimeline(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Frame indicators
+        // Frame indicators (past = blue, future/nowcast = purple)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -434,6 +371,7 @@ private fun RadarTimeline(
             frames.forEachIndexed { index, frame ->
                 val isCurrent = index == currentIndex
                 val isPast = index < currentIndex
+                val frameColor = if (frame.isNowcast) Color(0xFFCE93D8) else Color(0xFF64B5F6)
 
                 Box(
                     modifier = Modifier
@@ -441,8 +379,8 @@ private fun RadarTimeline(
                         .height(4.dp)
                         .background(
                             when {
-                                isCurrent -> Color(0xFF64B5F6)
-                                isPast -> Color(0xFF64B5F6).copy(alpha = 0.5f)
+                                isCurrent -> frameColor
+                                isPast -> frameColor.copy(alpha = 0.5f)
                                 else -> Color.White.copy(alpha = 0.2f)
                             },
                             shape = RoundedCornerShape(2.dp)
@@ -458,89 +396,33 @@ private fun RadarTimeline(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Time labels
+        // Per-frame time labels (every 3rd tick, plus "Now" and the final tick)
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "-2h",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 10.sp
-            )
-            Text(
-                text = "Now",
-                color = Color.White.copy(alpha = 0.6f),
-                fontSize = 10.sp
-            )
-        }
-    }
-}
-
-@Composable
-private fun RadarZoomControls(
-    currentScale: Float,
-    onZoomIn: () -> Unit,
-    onZoomOut: () -> Unit,
-    onReset: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Zoom In
-        IconButton(
-            onClick = onZoomIn,
-            modifier = Modifier
-                .size(44.dp)
-                .background(
-                    Color(0xFF1a1a2e).copy(alpha = 0.9f),
-                    shape = CircleShape
-                )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Zoom In",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        // Zoom Out
-        IconButton(
-            onClick = onZoomOut,
-            modifier = Modifier
-                .size(44.dp)
-                .background(
-                    Color(0xFF1a1a2e).copy(alpha = 0.9f),
-                    shape = CircleShape
-                )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Remove,
-                contentDescription = "Zoom Out",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        // Reset
-        IconButton(
-            onClick = onReset,
-            modifier = Modifier
-                .size(44.dp)
-                .background(
-                    Color(0xFF1a1a2e).copy(alpha = 0.9f),
-                    shape = CircleShape
-                )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Reset View",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp)
-            )
+            frames.forEachIndexed { index, frame ->
+                Box(modifier = Modifier.weight(1f)) {
+                    if (index == lastPastIndex) {
+                        Text(
+                            text = "Now",
+                            color = Color.White,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    } else if (index % 3 == 0 || index == frames.lastIndex) {
+                        Text(
+                            text = timeFormat.format(java.util.Date(frame.time * 1000L)),
+                            color = if (frame.isNowcast) Color(0xFFCE93D8)
+                                    else Color.White.copy(alpha = 0.6f),
+                            fontSize = 9.sp,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -616,15 +498,4 @@ private fun RadarErrorContent(
             Text("Try Again")
         }
     }
-}
-
-/**
- * Convert latitude/longitude to tile coordinates
- */
-private fun latLonToTileXY(lat: Double, lon: Double, zoom: Int): Pair<Int, Int> {
-    val n = 1 shl zoom
-    val x = ((lon + 180.0) / 360.0 * n).toInt()
-    val latRad = Math.toRadians(lat)
-    val y = ((1.0 - kotlin.math.ln(kotlin.math.tan(latRad) + 1 / kotlin.math.cos(latRad)) / kotlin.math.PI) / 2.0 * n).toInt()
-    return Pair(x, y)
 }

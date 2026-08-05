@@ -64,6 +64,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Initialize MapLibre for radar map
+        org.maplibre.android.MapLibre.getInstance(this)
+
         // Initialize preferences
         PreferencesManager.init(this)
 
