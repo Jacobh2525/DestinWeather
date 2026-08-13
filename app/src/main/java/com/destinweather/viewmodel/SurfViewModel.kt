@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.destinweather.data.SurfData
 import com.destinweather.data.model.SurfConditions
+import com.destinweather.utils.PreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class SurfViewModel : ViewModel() {
         fetchSurfData()
     }
 
-    fun fetchSurfData(location: String = "Destin") {
+    fun fetchSurfData(location: String = PreferencesManager.lastLocation.ifBlank { "Destin,US" }) {
         viewModelScope.launch {
             _surfState.value = SurfState.Loading
             try {

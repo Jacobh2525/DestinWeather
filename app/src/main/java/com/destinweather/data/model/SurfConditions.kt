@@ -8,7 +8,7 @@ data class SurfConditions(
     val windSpeed: Double,       // in mph
     val windDirection: String,
     val windRating: String,      // Good, Fair, Poor
-    val tide: String,            // Low, High, Rising, Falling
-    val waterTemp: Int,          // in Fahrenheit
+    val tide: String?,           // e.g. "Falling · Low 10:19 PM"; null if unavailable
+    val waterTemp: Int?,         // in Fahrenheit; null if no buoy reading
     val description: String
 )

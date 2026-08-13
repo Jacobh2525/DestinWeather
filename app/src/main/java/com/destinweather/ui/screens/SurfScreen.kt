@@ -39,7 +39,9 @@ fun SurfScreen(
     val isRefreshing = surfState is SurfState.Loading
     val pullToRefreshState = rememberPullToRefreshState()
 
-    val locationName = currentLocation.split(",").firstOrNull() ?: "Destin"
+    val locationLabel = presetLocations.find { it.queryName == currentLocation }
+        ?.let { "${it.city}, ${it.state}" }
+        ?: currentLocation
 
     // Get time-based background colors
     val backgroundColors = getSurfBackgroundColors()
@@ -59,7 +61,7 @@ fun SurfScreen(
                     isRefreshing = isRefreshing,
                     onRefresh = { viewModel.fetchSurfData(currentLocation) }
                 ) {
-                    SurfContent(state.surfList, locationName, onLocationClick)
+                    SurfContent(state.surfList, locationLabel, onLocationClick)
                 }
             }
             is SurfState.Error -> SurfErrorContent(state.message) { viewModel.fetchSurfData(currentLocation) }
@@ -89,7 +91,7 @@ private fun SurfLoadingContent() {
 @Composable
 private fun SurfContent(
     surfList: List<SurfConditions>,
-    locationName: String,
+    locationLabel: String,
     onLocationClick: () -> Unit
 ) {
     LazyColumn(
@@ -108,7 +110,7 @@ private fun SurfContent(
                     Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(alpha = 0.8f), modifier =
                         Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("$locationName, FL", fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
+                    Text(locationLabel, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(Icons.Default.KeyboardArrowDown, "Change location", tint = Color.White.copy(alpha = 0.8f), modifier
                     = Modifier.size(20.dp))
@@ -172,7 +174,7 @@ private fun SurfCard(surf: SurfConditions) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text("Water", fontSize = 11.sp, color = Color.Gray)
-                        Text("${surf.waterTemp}°F", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color =
+                        Text(surf.waterTemp?.let { "$it°F" } ?: "—", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color =
                             Color(0xFF00838F))
                     }
                 }
@@ -185,7 +187,7 @@ private fun SurfCard(surf: SurfConditions) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text("Tide", fontSize = 11.sp, color = Color.Gray)
-                        Text(surf.tide, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF00838F))
+                        Text(surf.tide ?: "—", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF00838F))
                     }
                 }
 

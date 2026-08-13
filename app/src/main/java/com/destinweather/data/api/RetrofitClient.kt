@@ -11,6 +11,7 @@ object RetrofitClient {
 
     private const val WEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5/"
     private const val NOAA_BASE_URL = "https://api.weather.gov/"
+    private const val OPEN_METEO_BASE_URL = "https://api.open-meteo.com/"
 
     // Appends the OpenWeatherMap API key (from local.properties) to OWM requests,
     // and the required identifying User-Agent to NWS (api.weather.gov) requests.
@@ -61,5 +62,14 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(NoaaApi::class.java)
+    }
+
+    val openMeteoApi: OpenMeteoApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(OPEN_METEO_BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(OpenMeteoApi::class.java)
     }
 }
