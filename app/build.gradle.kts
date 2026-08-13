@@ -3,6 +3,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Load secrets from local.properties (never committed)
+val localProperties = java.util.Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val owmApiKey: String = localProperties.getProperty("OWM_API_KEY") ?: ""
+
 android {
     namespace = "com.destinweather"
     compileSdk {
@@ -19,6 +26,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "OWM_API_KEY", "\"$owmApiKey\"")
     }
 
     buildTypes {
@@ -37,6 +46,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

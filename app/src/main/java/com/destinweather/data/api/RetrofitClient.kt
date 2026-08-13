@@ -1,5 +1,6 @@
 package com.destinweather.data.api
 
+import com.destinweather.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -11,11 +12,34 @@ object RetrofitClient {
     private const val WEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5/"
     private const val NOAA_BASE_URL = "https://api.weather.gov/"
 
+    // Appends the OpenWeatherMap API key (from local.properties) to OWM requests,
+    // and the required identifying User-Agent to NWS (api.weather.gov) requests.
+    private val headerInterceptor = okhttp3.Interceptor { chain ->
+        val request = chain.request()
+        val newRequest = when {
+            request.url.host.contains("openweathermap.org") -> {
+                val url = request.url.newBuilder()
+                    .addQueryParameter("appid", BuildConfig.OWM_API_KEY)
+                    .build()
+                request.newBuilder().url(url).build()
+            }
+            request.url.host.contains("api.weather.gov") -> {
+                request.newBuilder()
+                    .header("User-Agent", "DestinWeather (github.com/Jacobh2525/DestinWeather)")
+                    .build()
+            }
+            else -> request
+        }
+        chain.proceed(newRequest)
+    }
+
     private val logging = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                else HttpLoggingInterceptor.Level.NONE
     }
 
     private val client = OkHttpClient.Builder()
+        .addInterceptor(headerInterceptor)
         .addInterceptor(logging)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
