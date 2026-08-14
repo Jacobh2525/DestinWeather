@@ -26,7 +26,10 @@ class SurfViewModel : ViewModel() {
 
     fun fetchSurfData(location: String = PreferencesManager.lastLocation.ifBlank { "Destin,US" }) {
         viewModelScope.launch {
-            _surfState.value = SurfState.Loading
+            // Keep showing current content during pull-to-refresh
+            if (_surfState.value !is SurfState.Success) {
+                _surfState.value = SurfState.Loading
+            }
             try {
                 val surfList = SurfData.getSurfConditions(location)
                 _surfState.value = SurfState.Success(surfList)

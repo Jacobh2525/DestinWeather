@@ -125,14 +125,15 @@ fun AlertCard(alert: AlertProperties) {
         else -> Color(0xFF64B5F6)
     }
 
-    val severityIcon = when (alert.event?.lowercase()) {
-        "tornado" -> Icons.Default.Warning
-        "hurricane" -> Icons.Default.Warning
-        "flood", "flash flood" -> Icons.Default.Water
-        "rip current" -> Icons.Default.Waves
-        "thunderstorm" -> Icons.Default.Bolt
-        "wind" -> Icons.Default.Air
-        "heat" -> Icons.Default.Thermostat
+    val eventName = alert.event?.lowercase() ?: ""
+    val severityIcon = when {
+        "tornado" in eventName -> Icons.Default.Warning
+        "hurricane" in eventName || "tropical" in eventName -> Icons.Default.Warning
+        "flood" in eventName -> Icons.Default.Water
+        "rip current" in eventName -> Icons.Default.Waves
+        "thunderstorm" in eventName -> Icons.Default.Bolt
+        "wind" in eventName -> Icons.Default.Air
+        "heat" in eventName -> Icons.Default.Thermostat
         else -> Icons.Default.Warning
     }
 

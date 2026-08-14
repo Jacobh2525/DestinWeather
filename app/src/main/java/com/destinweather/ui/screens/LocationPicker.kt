@@ -134,7 +134,7 @@ fun LocationPickerSheet(
                 items(filteredLocations) { location ->
                     LocationItem(
                         location = location,
-                        isSelected = location.displayName == currentLocation,
+                        isSelected = location.queryName == currentLocation,
                         onClick = {
                             onLocationSelected(location.queryName, location.lat, location.lon)
                             onDismiss()

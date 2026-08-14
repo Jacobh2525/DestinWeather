@@ -36,6 +36,7 @@ import com.destinweather.data.model.ForecastItem
 import com.destinweather.data.model.ForecastResponse
 import com.destinweather.data.model.WeatherResponse
 import com.destinweather.ui.theme.WeatherBackground
+import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.WeatherState
 import com.destinweather.viewmodel.WeatherViewModel
 import java.text.SimpleDateFormat
@@ -108,10 +109,12 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
     val sunriseTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(weather.sys.sunrise * 1000))
     val sunsetTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(weather.sys.sunset * 1000))
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-    val hourlyToday = forecast.list.filter { 
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt * 1000)) == today 
+    val hourlyToday = forecast.list.filter {
+        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt * 1000)) == today
     }.take(12)
     val currentPrecip = ((forecast.list.firstOrNull()?.pop ?: 0.0) * 100).toInt()
+    val tempUnit = if (PreferencesManager.useFahrenheit) "°F" else "°C"
+    val speedUnit = if (PreferencesManager.useFahrenheit) "mph" else "m/s"
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), horizontalAlignment =
         Alignment.CenterHorizontally) {
@@ -140,8 +143,11 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
         Text(weather.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "", fontSize = 20.sp, color =
             Color.White.copy(alpha = 0.9f))
 
-        val highTemp = forecast.list.maxOfOrNull { it.main.temp }?.toInt() ?: 0
-        val lowTemp = forecast.list.minOfOrNull { it.main.temp }?.toInt() ?: 0
+        val todayTemps = forecast.list.filter {
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt * 1000)) == today
+        }
+        val highTemp = todayTemps.maxOfOrNull { it.main.temp }?.toInt() ?: weather.main.temp.toInt()
+        val lowTemp = todayTemps.minOfOrNull { it.main.temp }?.toInt() ?: weather.main.temp.toInt()
         Text("H: ${highTemp}°  •  L: ${lowTemp}°", fontSize = 16.sp, color = Color.White.copy(alpha = 0.8f))
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -154,7 +160,7 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
                 value = "${weather.main.feelsLike.toInt()}°",
                 icon = Icons.Default.Thermostat,
                 details = listOf(
-                    "Actual: ${weather.main.temp.toInt()}°F" to "",
+                    "Actual: ${weather.main.temp.toInt()}$tempUnit" to "",
                     "Diff: ${(weather.main.feelsLike - weather.main.temp).toInt()}°" to ""
                 )
             )
@@ -165,7 +171,7 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
                 icon = Icons.Default.WaterDrop,
                 details = listOf(
                     "Level: ${if (weather.main.humidity > 70) "High" else if (weather.main.humidity > 40) "Normal" else "Low"}" to "",
-                    "Dew Point: ${(weather.main.temp - (100 - weather.main.humidity) / 5).toInt()}°F" to ""
+                    "Dew Point: ${(weather.main.temp - (100 - weather.main.humidity) / 5).toInt()}$tempUnit" to ""
                 )
             )
         }
@@ -177,7 +183,7 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
             ExpandableDetailCard(
                 modifier = Modifier.weight(1f),
                 title = "Wind",
-                value = "${weather.wind.speed.toInt()} mph",
+                value = "${weather.wind.speed.toInt()} $speedUnit",
                 icon = Icons.Default.Air,
                 details = listOf(
                     "Direction: ${getWindDirection(weather.wind.deg)}" to "",
@@ -411,12 +417,20 @@ private fun calculateUVIndex(forecast: ForecastResponse): Int {
 @Composable
 fun ForecastSection(forecast: ForecastResponse) {
     val dailyForecasts = forecast.list.groupBy { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt *
-            1000)) }.map { it.value.first() }.take(5)
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { dailyForecasts.forEach { ForecastRowCard(it) } }
+            1000)) }.values.take(5)
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        dailyForecasts.forEach { dayItems ->
+            ForecastRowCard(
+                item = dayItems.first(),
+                highTemp = dayItems.maxOf { it.main.temp },
+                lowTemp = dayItems.minOf { it.main.temp }
+            )
+        }
+    }
 }
 
 @Composable
-fun ForecastRowCard(item: ForecastItem) {
+fun ForecastRowCard(item: ForecastItem, highTemp: Double, lowTemp: Double) {
     val dayName = if (SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(item.dt * 1000)) ==
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())) "Today" else SimpleDateFormat("EEE",
         Locale.getDefault()).format(Date(item.dt * 1000))
@@ -443,9 +457,9 @@ fun ForecastRowCard(item: ForecastItem) {
                     Text("$precipChance%", fontSize = 12.sp, color = Color(0xFF64B5F6))
                 }
             } else { Spacer(modifier = Modifier.width(45.dp)) }
-            Text("${item.main.temp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
+            Text("${highTemp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
                 modifier = Modifier.width(40.dp))
-            Text("${(item.main.temp - 5).toInt()}°", fontSize = 14.sp, color = Color.White.copy(alpha = 0.6f))
+            Text("${lowTemp.toInt()}°", fontSize = 14.sp, color = Color.White.copy(alpha = 0.6f))
         }
     }
 }

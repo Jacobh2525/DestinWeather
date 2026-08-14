@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.destinweather.data.api.RetrofitClient
 import com.destinweather.data.model.ForecastResponse
 import com.destinweather.data.model.WeatherResponse
+import com.destinweather.utils.PreferencesManager
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,7 +22,7 @@ class WeatherViewModel : ViewModel() {
     private val _weatherState = MutableStateFlow<WeatherState>(WeatherState.Loading)
     val weatherState: StateFlow<WeatherState> = _weatherState
 
-    private val _currentLocation = MutableStateFlow("Destin,US")
+    private val _currentLocation = MutableStateFlow(PreferencesManager.lastLocation)
     val currentLocation: StateFlow<String> = _currentLocation
 
     init {
@@ -29,12 +31,16 @@ class WeatherViewModel : ViewModel() {
 
     fun fetchWeather(location: String = _currentLocation.value) {
         viewModelScope.launch {
-            _weatherState.value = WeatherState.Loading
+            // Keep showing current content during pull-to-refresh
+            if (_weatherState.value !is WeatherState.Success) {
+                _weatherState.value = WeatherState.Loading
+            }
             _currentLocation.value = location
             try {
-                val weather = RetrofitClient.weatherApi.getWeather(city = location)
-                val forecast = RetrofitClient.weatherApi.getForecast(city = location)
-                _weatherState.value = WeatherState.Success(weather, forecast)
+                val units = if (PreferencesManager.useFahrenheit) "imperial" else "metric"
+                val weatherDeferred = async { RetrofitClient.weatherApi.getWeather(city = location, units = units) }
+                val forecastDeferred = async { RetrofitClient.weatherApi.getForecast(city = location, units = units) }
+                _weatherState.value = WeatherState.Success(weatherDeferred.await(), forecastDeferred.await())
             } catch (e: Exception) {
                 _weatherState.value = WeatherState.Error(e.message ?: "Unknown error")
             }
@@ -45,6 +51,3 @@ class WeatherViewModel : ViewModel() {
         fetchWeather(location)
     }
 }
-
-
-

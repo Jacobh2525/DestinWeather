@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.*
 import com.destinweather.data.api.RetrofitClient
 import com.destinweather.utils.NotificationHelper
+import com.destinweather.utils.PreferencesManager
 import java.util.concurrent.TimeUnit
 
 class AlertCheckWorker(
@@ -12,6 +13,12 @@ class AlertCheckWorker(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        // Prefs may not be initialized if the process started just for this worker
+        PreferencesManager.init(applicationContext)
+
+        // Respect the settings toggle even if the work somehow remains enqueued
+        if (!PreferencesManager.notificationsEnabled) return Result.success()
+
         val lat = inputData.getDouble(KEY_LAT, 30.3935)
         val lon = inputData.getDouble(KEY_LON, -86.4958)
 
@@ -24,9 +31,12 @@ class AlertCheckWorker(
                 it.severity == "Extreme" || it.severity == "Severe"
             }
 
-            if (severeAlerts.isNotEmpty()) {
-                // Show notification for the most severe alert
-                val worstAlert = severeAlerts.first()
+            // Only notify for alerts we haven't already notified about
+            val alreadyNotified = PreferencesManager.notifiedAlertIds
+            val newAlerts = severeAlerts.filter { (it.id ?: "") !in alreadyNotified }
+
+            if (newAlerts.isNotEmpty()) {
+                val worstAlert = newAlerts.first()
                 NotificationHelper.showSevereAlertNotification(
                     context = applicationContext,
                     alertId = worstAlert.id ?: "alert",
@@ -34,9 +44,14 @@ class AlertCheckWorker(
                     severity = worstAlert.severity ?: "Severe",
                     headline = worstAlert.headline
                 )
+                PreferencesManager.notifiedAlertIds =
+                    alreadyNotified + newAlerts.mapNotNull { it.id }
             }
 
             Result.success()
+        } catch (e: retrofit2.HttpException) {
+            // 4xx responses are deterministic - retrying won't help
+            if (e.code() in 400..499) Result.success() else Result.retry()
         } catch (e: Exception) {
             Result.retry()
         }

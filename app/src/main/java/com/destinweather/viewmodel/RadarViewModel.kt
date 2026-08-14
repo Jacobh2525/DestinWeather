@@ -48,7 +48,10 @@ class RadarViewModel : ViewModel() {
 
     fun fetchRadarData() {
         viewModelScope.launch {
-            _radarState.value = RadarState.Loading
+            // Keep showing current content during refresh
+            if (_radarState.value !is RadarState.Success) {
+                _radarState.value = RadarState.Loading
+            }
 
             try {
                 val result = repository.fetchRadarTimestamps()

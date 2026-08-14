@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.destinweather.data.api.RetrofitClient
 import com.destinweather.data.model.NoaaPeriod
+import com.destinweather.utils.PreferencesManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +25,8 @@ class NoaaViewModel : ViewModel() {
     private val _forecastState = MutableStateFlow<NoaaState>(NoaaState.Loading)
     val forecastState: StateFlow<NoaaState> = _forecastState
 
-    private var currentLat = 30.3935  // Default: Destin
-    private var currentLon = -86.4958
+    private var currentLat = PreferencesManager.lastLat
+    private var currentLon = PreferencesManager.lastLon
 
     init {
         fetchNoaaForecast()
@@ -33,7 +34,10 @@ class NoaaViewModel : ViewModel() {
 
     fun fetchNoaaForecast(latitude: Double = currentLat, longitude: Double = currentLon) {
         viewModelScope.launch {
-            _forecastState.value = NoaaState.Loading
+            // Keep showing current content during pull-to-refresh
+            if (_forecastState.value !is NoaaState.Success) {
+                _forecastState.value = NoaaState.Loading
+            }
             try {
                 currentLat = latitude
                 currentLon = longitude

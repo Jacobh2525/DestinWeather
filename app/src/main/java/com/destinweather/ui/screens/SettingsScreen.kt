@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.destinweather.utils.PreferencesManager
+import com.destinweather.workers.AlertCheckWorker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,9 +116,18 @@ fun SettingsScreen() {
                     )
                     Switch(
                         checked = notificationsEnabled,
-                        onCheckedChange = {
-                            notificationsEnabled = it
-                            PreferencesManager.notificationsEnabled = it
+                        onCheckedChange = { enabled ->
+                            notificationsEnabled = enabled
+                            PreferencesManager.notificationsEnabled = enabled
+                            if (enabled) {
+                                AlertCheckWorker.schedule(
+                                    context,
+                                    PreferencesManager.lastLat,
+                                    PreferencesManager.lastLon
+                                )
+                            } else {
+                                AlertCheckWorker.cancel(context)
+                            }
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
