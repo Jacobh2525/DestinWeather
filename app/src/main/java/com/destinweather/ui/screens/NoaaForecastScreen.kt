@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,7 +56,7 @@ fun NoaaForecastScreen(
         ) {
             when (val state = forecastState) {
                 is NoaaState.Loading -> LoadingContent()
-                is NoaaState.Success -> ForecastContent(state.periods)
+                is NoaaState.Success -> ForecastContent(state.periods, state.afdText, state.afdOffice)
                 is NoaaState.Error -> ErrorContent(state.message) { viewModel.fetchNoaaForecast() }
             }
         }
@@ -73,7 +74,7 @@ fun LoadingContent() {
 }
 
 @Composable
-fun ForecastContent(periods: List<NoaaPeriod>) {
+fun ForecastContent(periods: List<NoaaPeriod>, afdText: String?, afdOffice: String?) {
     val todayPeriods = periods.take(3)
     val extendedPeriods = periods.drop(3)
 
@@ -115,6 +116,21 @@ fun ForecastContent(periods: List<NoaaPeriod>) {
             }
         }
 
+        if (!afdText.isNullOrBlank()) {
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Forecast Discussion",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+            item {
+                AfdCard(afdText, afdOffice)
+            }
+        }
+
         if (extendedPeriods.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -133,6 +149,71 @@ fun ForecastContent(periods: List<NoaaPeriod>) {
 
         item {
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun AfdCard(afdText: String, afdOffice: String?) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.15f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Area Forecast Discussion",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "NWS ${afdOffice ?: ""} · Forecaster's technical analysis",
+                        fontSize = 12.sp,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = Color.White.copy(alpha = 0.8f),
+                    modifier = Modifier.clickable { expanded = !expanded }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = if (expanded) afdText else afdText.take(600).trimEnd() + "  …",
+                fontSize = 12.sp,
+                fontFamily = FontFamily.Monospace,
+                color = Color.White.copy(alpha = 0.9f),
+                lineHeight = 16.sp
+            )
+
+            Text(
+                text = if (expanded) "Show less" else "Read full discussion",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF64B5F6),
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .clickable { expanded = !expanded }
+            )
         }
     }
 }
@@ -199,12 +280,36 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = period.shortForecast ?: "",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = period.shortForecast ?: "",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White,
+                    modifier = Modifier.weight(1f)
+                )
+                period.probabilityOfPrecipitation?.value?.let { pop ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.WaterDrop,
+                            contentDescription = "Precipitation chance",
+                            tint = Color(0xFF64B5F6),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "$pop%",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF64B5F6)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

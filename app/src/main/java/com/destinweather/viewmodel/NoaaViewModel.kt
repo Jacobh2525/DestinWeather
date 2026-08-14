@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.destinweather.data.api.RetrofitClient
 import com.destinweather.data.model.NoaaPeriod
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed class NoaaState {
     object Loading : NoaaState()
-    data class Success(val periods: List<NoaaPeriod>) : NoaaState()
+    data class Success(
+        val periods: List<NoaaPeriod>,
+        val afdText: String? = null,
+        val afdOffice: String? = null
+    ) : NoaaState()
     data class Error(val message: String) : NoaaState()
 }
 
@@ -41,11 +46,25 @@ class NoaaViewModel : ViewModel() {
                 val gridId = pointResponse.properties?.gridId
                 val gridX = pointResponse.properties?.gridX
                 val gridY = pointResponse.properties?.gridY
+                val cwa = pointResponse.properties?.cwa
 
                 if (gridId != null && gridX != null && gridY != null) {
-                    val forecast = RetrofitClient.noaaApi.getForecast(gridId, gridX, gridY)
-                    val periods = forecast.properties?.periods ?: emptyList()
-                    _forecastState.value = NoaaState.Success(periods)
+                    // Forecast is essential; AFD is best-effort (never blocks the forecast)
+                    val forecastDeferred = async {
+                        RetrofitClient.noaaApi.getForecast(gridId, gridX, gridY)
+                    }
+                    val afdDeferred = async {
+                        runCatching { fetchLatestAfd(cwa) }.getOrNull()
+                    }
+
+                    val periods = forecastDeferred.await().properties?.periods ?: emptyList()
+                    val afdText = afdDeferred.await()
+
+                    _forecastState.value = NoaaState.Success(
+                        periods = periods,
+                        afdText = afdText,
+                        afdOffice = cwa
+                    )
                 } else {
                     _forecastState.value = NoaaState.Error("Could not get forecast grid")
                 }
@@ -53,6 +72,13 @@ class NoaaViewModel : ViewModel() {
                 _forecastState.value = NoaaState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private suspend fun fetchLatestAfd(cwa: String?): String? {
+        if (cwa.isNullOrBlank()) return null
+        val list = RetrofitClient.noaaApi.getAfdList(cwa)
+        val latestId = list.products?.firstOrNull()?.id ?: return null
+        return RetrofitClient.noaaApi.getProduct(latestId).productText
     }
 
     fun setLocation(lat: Double, lon: Double) {

@@ -1,5 +1,7 @@
 package com.destinweather.data.api
 
+import com.destinweather.data.model.AfdListResponse
+import com.destinweather.data.model.AfdProductResponse
 import com.destinweather.data.model.NoaaAlertResponse
 import com.destinweather.data.model.NoaaForecastResponse
 import retrofit2.http.GET
@@ -21,11 +23,22 @@ interface NoaaApi {
         @Path("y") y: Int
     ): NoaaForecastResponse
 
-    // NEW: Get active alerts
     @GET("alerts/active")
     suspend fun getActiveAlerts(
         @Query("point") point: String  // format: "lat,lon"
     ): NoaaAlertResponse
+
+    // Area Forecast Discussion: list recent AFDs for a Weather Forecast Office
+    @GET("products/types/AFD/locations/{wfo}")
+    suspend fun getAfdList(
+        @Path("wfo") wfo: String
+    ): AfdListResponse
+
+    // Fetch a single text product by id
+    @GET("products/{id}")
+    suspend fun getProduct(
+        @Path("id") id: String
+    ): AfdProductResponse
 }
 
 data class PointResponse(
@@ -35,5 +48,6 @@ data class PointResponse(
 data class PointProperties(
     val gridId: String?,
     val gridX: Int?,
-    val gridY: Int?
+    val gridY: Int?,
+    val cwa: String?
 )
