@@ -31,6 +31,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.destinweather.ui.screens.AlertsScreen
 import com.destinweather.ui.screens.BeachCamsScreen
+import com.destinweather.ui.screens.HurricaneScreen
 import com.destinweather.ui.screens.LocationPickerSheet
 import com.destinweather.ui.screens.NoaaForecastScreen
 import com.destinweather.ui.screens.RadarScreen
@@ -40,6 +41,7 @@ import com.destinweather.ui.screens.WeatherScreen
 import com.destinweather.utils.NotificationHelper
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.AlertsViewModel
+import com.destinweather.viewmodel.HurricaneViewModel
 import com.destinweather.viewmodel.NoaaViewModel
 import com.destinweather.viewmodel.RadarViewModel
 import com.destinweather.viewmodel.SurfViewModel
@@ -91,6 +93,7 @@ class MainActivity : ComponentActivity() {
             val noaaViewModel: NoaaViewModel = viewModel()
             val alertsViewModel: AlertsViewModel = viewModel()
             val radarViewModel: RadarViewModel = viewModel()
+            val hurricaneViewModel: HurricaneViewModel = viewModel()
             val currentLocation by weatherViewModel.currentLocation.collectAsState()
 
             var showLocationPicker by remember { mutableStateOf(false) }
@@ -103,6 +106,7 @@ class MainActivity : ComponentActivity() {
                 BottomNavItem("Weather", Icons.Default.Cloud, Icons.Outlined.Cloud),
                 BottomNavItem("Surf", Icons.Default.Waves, Icons.Outlined.Waves),
                 BottomNavItem("Alerts", Icons.Default.Warning, Icons.Outlined.Warning),
+                BottomNavItem("Storms", Icons.Default.Cyclone, Icons.Outlined.Cyclone),
                 BottomNavItem("Radar", Icons.Default.Radar, Icons.Outlined.Radar),
                 BottomNavItem("Forecast", Icons.AutoMirrored.Filled.Article, Icons.AutoMirrored.Outlined.Article),
                 BottomNavItem("Cams", Icons.Default.Videocam, Icons.Outlined.Videocam)
@@ -252,16 +256,17 @@ class MainActivity : ComponentActivity() {
                                     viewModel = alertsViewModel,
                                     onLocationClick = { showLocationPicker = true }
                                 )
-                                3 -> RadarScreen(
+                                3 -> HurricaneScreen(viewModel = hurricaneViewModel)
+                                4 -> RadarScreen(
                                     viewModel = radarViewModel,
                                     onLocationClick = { showLocationPicker = true }
                                 )
-                                4 -> NoaaForecastScreen(
+                                5 -> NoaaForecastScreen(
                                     viewModel = noaaViewModel,
                                     onLocationClick = { showLocationPicker = true }
                                 )
-                                5 -> BeachCamsScreen()
-                                6 -> SettingsScreen()
+                                6 -> BeachCamsScreen()
+                                7 -> SettingsScreen()
                             }
                         }
                     }

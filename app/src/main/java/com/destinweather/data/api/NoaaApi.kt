@@ -34,6 +34,13 @@ interface NoaaApi {
         @Path("wfo") wfo: String
     ): AfdListResponse
 
+    // Recent text products of a given type across all offices
+    // (e.g. type "TWO" = Tropical Weather Outlook from NHC/CPHC)
+    @GET("products/types/{type}")
+    suspend fun getProductsByType(
+        @Path("type") type: String
+    ): AfdListResponse
+
     // Fetch a single text product by id
     @GET("products/{id}")
     suspend fun getProduct(

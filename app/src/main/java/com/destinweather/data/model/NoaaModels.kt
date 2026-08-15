@@ -33,7 +33,9 @@ data class AfdListResponse(
 
 data class AfdProductRef(
     val id: String?,
-    val issuanceTime: String?
+    val issuanceTime: String?,
+    val wmoCollectiveId: String? = null,
+    val issuingOffice: String? = null
 )
 
 data class AfdProductResponse(
