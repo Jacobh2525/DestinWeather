@@ -41,6 +41,7 @@ import com.destinweather.viewmodel.WeatherState
 import com.destinweather.viewmodel.WeatherViewModel
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,7 +68,7 @@ fun WeatherScreen(
                         onRefresh = { viewModel.fetchWeather() },
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        WeatherContent(state.weather, state.forecast, onLocationClick)
+                        WeatherContent(state.weather, state.forecast, state.uvIndex, state.dewPoint, onLocationClick)
                     }
                 }
             }
@@ -104,8 +105,7 @@ private fun WeatherLoadingContent() {
 }
 
 @Composable
-fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocationClick: () -> Unit) {
-    val uvIndex = calculateUVIndex(forecast)
+fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, uvIndex: Int?, dewPoint: Double?, onLocationClick: () -> Unit) {
     val sunriseTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(weather.sys.sunrise * 1000))
     val sunsetTime = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(weather.sys.sunset * 1000))
     val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -113,8 +113,11 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
         SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt * 1000)) == today
     }.take(12)
     val currentPrecip = ((forecast.list.firstOrNull()?.pop ?: 0.0) * 100).toInt()
-    val tempUnit = if (PreferencesManager.useFahrenheit) "°F" else "°C"
-    val speedUnit = if (PreferencesManager.useFahrenheit) "mph" else "m/s"
+    val useFahrenheit = PreferencesManager.useFahrenheit
+    val tempUnit = if (useFahrenheit) "°F" else "°C"
+    val speedUnit = if (useFahrenheit) "mph" else "m/s"
+    // OWM returns m/s in metric mode; the wind description thresholds are mph-based
+    val windSpeedMph = if (useFahrenheit) weather.wind.speed else weather.wind.speed * 2.23694
 
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), horizontalAlignment =
         Alignment.CenterHorizontally) {
@@ -169,10 +172,10 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
                 title = "Humidity",
                 value = "${weather.main.humidity}%",
                 icon = Icons.Default.WaterDrop,
-                details = listOf(
-                    "Level: ${if (weather.main.humidity > 70) "High" else if (weather.main.humidity > 40) "Normal" else "Low"}" to "",
-                    "Dew Point: ${(weather.main.temp - (100 - weather.main.humidity) / 5).toInt()}$tempUnit" to ""
-                )
+                details = buildList {
+                    add("Level: ${if (weather.main.humidity > 70) "High" else if (weather.main.humidity > 40) "Normal" else "Low"}" to "")
+                    dewPoint?.let { add("Dew Point: ${it.roundToInt()}$tempUnit" to "") }
+                }
             )
         }
 
@@ -187,7 +190,7 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
                 icon = Icons.Default.Air,
                 details = listOf(
                     "Direction: ${getWindDirection(weather.wind.deg)}" to "",
-                    "Speed: ${getWindDescription(weather.wind.speed)}" to ""
+                    "Speed: ${getWindDescription(windSpeedMph)}" to ""
                 )
             )
             ExpandableDetailCard(
@@ -208,13 +211,13 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, onLocat
         ExpandableDetailCard(
             modifier = Modifier.fillMaxWidth(),
             title = "UV Index",
-            value = "$uvIndex - ${getUVLevel(uvIndex)}",
+            value = uvIndex?.let { "$it - ${getUVLevel(it)}" } ?: "—",
             icon = Icons.Default.WbSunny,
-            details = listOf(
+            details = if (uvIndex != null) listOf(
                 "Level: ${getUVLevel(uvIndex)}" to "",
                 "Protection: ${getUVProtection(uvIndex)}" to "",
                 "Tip: ${getUVTip(uvIndex)}" to ""
-            )
+            ) else listOf("Data unavailable" to "")
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -405,13 +408,6 @@ fun HourlyCard(item: ForecastItem) {
             }
         }
     }
-}
-
-private fun calculateUVIndex(forecast: ForecastResponse): Int {
-    val cloudCover = forecast.list.firstOrNull()?.clouds?.all ?: 50
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    val baseUV = when (hour) { in 6..8 -> 2; in 9..10 -> 5; in 11..14 -> 8; in 15..16 -> 6; in 17..18 -> 3; else -> 0 }
-    return (baseUV * (1 - cloudCover / 200.0)).toInt().coerceAtLeast(0)
 }
 
 @Composable

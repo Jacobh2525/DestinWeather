@@ -27,3 +27,17 @@ data class WindCurrent(
     @SerializedName("wind_speed_10m") val windSpeed: Double?,
     @SerializedName("wind_direction_10m") val windDirection: Double?
 )
+
+// Open-Meteo Forecast API (dew point + UV index for the weather screen)
+data class CurrentExtrasResponse(
+    @SerializedName("current") val current: CurrentExtras?,
+    @SerializedName("hourly") val hourly: HourlyExtras?
+)
+
+data class CurrentExtras(
+    @SerializedName("dewpoint_2m") val dewPoint: Double?
+)
+
+data class HourlyExtras(
+    @SerializedName("uv_index") val uvIndex: List<Double>?
+)
