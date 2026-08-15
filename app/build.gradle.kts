@@ -1,12 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
 // Load secrets from local.properties (never committed)
-val localProperties = java.util.Properties().apply {
-    val file = rootProject.file("local.properties")
-    if (file.exists()) file.inputStream().use { load(it) }
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 val owmApiKey: String = localProperties.getProperty("OWM_API_KEY") ?: ""
 

@@ -1,7 +1,6 @@
 package com.destinweather.data.api
 
 import com.destinweather.data.model.ForecastResponse
-import com.destinweather.data.model.MarineResponse
 import com.destinweather.data.model.WeatherResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -22,11 +21,5 @@ interface WeatherApi {
         @Query("q") city: String = "Destin,US",
         @Query("units") units: String = "imperial"
     ): ForecastResponse
-
-    @GET("forecast/marine")
-    suspend fun getMarineWeather(
-        @Query("q") city: String = "Destin,US",
-        @Query("units") units: String = "imperial"
-    ): MarineResponse
 
 }
