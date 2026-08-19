@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.destinweather.data.model.SurfConditions
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.viewmodel.SurfState
 import com.destinweather.viewmodel.SurfViewModel
 import java.util.Calendar
@@ -50,7 +51,7 @@ fun SurfScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(colors = backgroundColors)
+                Brush.verticalGradient(colors = AppTheme.gradient(backgroundColors))
             )
     ) {
         when (val state = surfState) {
@@ -84,7 +85,7 @@ private fun getSurfBackgroundColors(): List<Color> {
 @Composable
 private fun SurfLoadingContent() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = Color.White)
+        CircularProgressIndicator(color = AppTheme.textPrimary)
     }
 }
 
@@ -107,16 +108,16 @@ private fun SurfContent(
                     modifier = Modifier.clickable { onLocationClick() }.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(alpha = 0.8f), modifier =
+                    Icon(Icons.Default.LocationOn, null, tint = AppTheme.textPrimary.copy(alpha = 0.8f), modifier =
                         Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(locationLabel, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
+                    Text(locationLabel, fontSize = 14.sp, color = AppTheme.textPrimary.copy(alpha = 0.8f))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Icon(Icons.Default.KeyboardArrowDown, "Change location", tint = Color.White.copy(alpha = 0.8f), modifier
+                    Icon(Icons.Default.KeyboardArrowDown, "Change location", tint = AppTheme.textPrimary.copy(alpha = 0.8f), modifier
                     = Modifier.size(20.dp))
                 }
 
-                Text("Surf Conditions", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Surf Conditions", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppTheme.textPrimary)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -225,11 +226,11 @@ private fun SurfStatBox(icon: ImageVector, label: String, value: String) {
 private fun SurfErrorContent(message: String, onRetry: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Default.Warning, null, modifier = Modifier.size(80.dp), tint = Color.White.copy(alpha = 0.6f))
+        Icon(Icons.Default.Warning, null, modifier = Modifier.size(80.dp), tint = AppTheme.textMuted)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppTheme.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, color = Color.White.copy(alpha = 0.7f))
+        Text(message, color = AppTheme.textSecondary)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = Color.White), shape =
             RoundedCornerShape(12.dp)) {

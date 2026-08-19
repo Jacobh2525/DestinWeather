@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.viewmodel.RadarFrame
 import com.destinweather.viewmodel.RadarState
 import com.destinweather.viewmodel.RadarViewModel
@@ -48,10 +49,8 @@ fun RadarScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E88E5),
-                        Color(0xFF1565C0),
-                        Color(0xFF0D47A1)
+                    colors = AppTheme.gradient(
+                        listOf(Color(0xFF1E88E5), Color(0xFF1565C0), Color(0xFF0D47A1))
                     )
                 )
             )
@@ -76,7 +75,7 @@ fun RadarScreen(
                     .padding(horizontal = 12.dp)
                     .padding(bottom = 12.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFF1a1a2e))
+                    .background(AppTheme.shellBackground)
             ) {
                 when (val state = radarState) {
                     is RadarState.Loading -> {
@@ -232,12 +231,12 @@ private fun RadarHeader(
                 text = "Live Radar",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AppTheme.textPrimary
             )
             Text(
                 text = if (timestamp.isNotEmpty()) "As of $timestamp" else "Loading...",
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f)
+                color = AppTheme.textPrimary.copy(alpha = 0.8f)
             )
         }
 
@@ -248,14 +247,14 @@ private fun RadarHeader(
                 onClick = onPlayPause,
                 modifier = Modifier
                     .background(
-                        Color.White.copy(alpha = 0.2f),
+                        AppTheme.iconCircle,
                         shape = CircleShape
                     )
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = Color.White
+                    tint = AppTheme.textPrimary
                 )
             }
 
@@ -263,14 +262,14 @@ private fun RadarHeader(
                 onClick = onRefresh,
                 modifier = Modifier
                     .background(
-                        Color.White.copy(alpha = 0.2f),
+                        AppTheme.iconCircle,
                         shape = CircleShape
                     )
             ) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Refresh",
-                    tint = Color.White
+                    tint = AppTheme.textPrimary
                 )
             }
 
@@ -278,14 +277,14 @@ private fun RadarHeader(
                 onClick = onLocationClick,
                 modifier = Modifier
                     .background(
-                        Color.White.copy(alpha = 0.2f),
+                        AppTheme.iconCircle,
                         shape = CircleShape
                     )
             ) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = "Change Location",
-                    tint = Color.White
+                    tint = AppTheme.textPrimary
                 )
             }
         }
@@ -307,7 +306,7 @@ private fun RadarTimeline(
             .fillMaxWidth()
             .padding(16.dp)
             .background(
-                Color(0xFF1a1a2e).copy(alpha = 0.9f),
+                AppTheme.shellBackground.copy(alpha = 0.9f),
                 shape = RoundedCornerShape(12.dp)
             )
             .padding(12.dp)
@@ -319,7 +318,7 @@ private fun RadarTimeline(
         ) {
             Text(
                 text = "Radar Timeline",
-                color = Color.White,
+                color = AppTheme.shellText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -346,7 +345,7 @@ private fun RadarTimeline(
                             modifier = Modifier
                                 .size(6.dp)
                                 .background(
-                                    Color(0xFF64B5F6).copy(alpha = alpha),
+                                    AppTheme.accent.copy(alpha = alpha),
                                     shape = CircleShape
                                 )
                         )
@@ -354,7 +353,7 @@ private fun RadarTimeline(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Playing",
-                        color = Color(0xFF64B5F6),
+                        color = AppTheme.accent,
                         fontSize = 12.sp
                     )
                 }
@@ -371,7 +370,7 @@ private fun RadarTimeline(
             frames.forEachIndexed { index, frame ->
                 val isCurrent = index == currentIndex
                 val isPast = index < currentIndex
-                val frameColor = if (frame.isNowcast) Color(0xFFCE93D8) else Color(0xFF64B5F6)
+                val frameColor = if (frame.isNowcast) Color(0xFFCE93D8) else AppTheme.accent
 
                 Box(
                     modifier = Modifier
@@ -381,7 +380,7 @@ private fun RadarTimeline(
                             when {
                                 isCurrent -> frameColor
                                 isPast -> frameColor.copy(alpha = 0.5f)
-                                else -> Color.White.copy(alpha = 0.2f)
+                                else -> AppTheme.iconCircle
                             },
                             shape = RoundedCornerShape(2.dp)
                         )
@@ -405,7 +404,7 @@ private fun RadarTimeline(
                     if (index == lastPastIndex) {
                         Text(
                             text = "Now",
-                            color = Color.White,
+                            color = AppTheme.textPrimary,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -415,7 +414,7 @@ private fun RadarTimeline(
                         Text(
                             text = timeFormat.format(java.util.Date(frame.time * 1000L)),
                             color = if (frame.isNowcast) Color(0xFFCE93D8)
-                                    else Color.White.copy(alpha = 0.6f),
+                                    else AppTheme.textMuted,
                             fontSize = 9.sp,
                             maxLines = 1,
                             softWrap = false
@@ -437,13 +436,13 @@ private fun RadarLoadingContent() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator(
-                color = Color(0xFF64B5F6),
+                color = AppTheme.accent,
                 modifier = Modifier.size(48.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Loading radar...",
-                color = Color.White.copy(alpha = 0.8f),
+                color = AppTheme.textPrimary.copy(alpha = 0.8f),
                 fontSize = 16.sp
             )
         }
@@ -465,27 +464,27 @@ private fun RadarErrorContent(
         Icon(
             imageVector = Icons.Default.CloudOff,
             contentDescription = null,
-            tint = Color.White.copy(alpha = 0.6f),
+            tint = AppTheme.textPrimary.copy(alpha = 0.6f),
             modifier = Modifier.size(64.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Unable to load radar",
-            color = Color.White,
+            color = AppTheme.textPrimary,
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
-            color = Color.White.copy(alpha = 0.7f),
+            color = AppTheme.textPrimary.copy(alpha = 0.7f),
             fontSize = 14.sp
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF64B5F6)
+                containerColor = AppTheme.accent
             ),
             shape = RoundedCornerShape(12.dp)
         ) {

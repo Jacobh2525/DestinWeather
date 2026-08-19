@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.utils.GpsLocationHelper
 import kotlinx.coroutines.launch
 
@@ -105,8 +106,8 @@ fun LocationPickerSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1a1a2e),
-        contentColor = Color.White
+        containerColor = AppTheme.shellBackground,
+        contentColor = AppTheme.shellText
     ) {
         Column(
             modifier = Modifier
@@ -124,13 +125,13 @@ fun LocationPickerSheet(
                     text = "Select Location",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = AppTheme.shellText
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Color.White
+                        tint = AppTheme.shellText
                     )
                 }
             }
@@ -151,11 +152,11 @@ fun LocationPickerSheet(
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFF64B5F6),
+                    focusedTextColor = AppTheme.shellText,
+                    unfocusedTextColor = AppTheme.shellText,
+                    focusedBorderColor = AppTheme.accent,
                     unfocusedBorderColor = Color.Gray,
-                    cursorColor = Color(0xFF64B5F6)
+                    cursorColor = AppTheme.accent
                 ),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true
@@ -208,7 +209,7 @@ fun LocationItem(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(
-                if (isSelected) Color(0xFF64B5F6).copy(alpha = 0.2f)
+                if (isSelected) AppTheme.accent.copy(alpha = 0.2f)
                 else Color.Transparent,
                 RoundedCornerShape(12.dp)
             )
@@ -222,7 +223,7 @@ fun LocationItem(
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = null,
-                tint = if (isSelected) Color(0xFF64B5F6) else Color.Gray
+                tint = if (isSelected) AppTheme.accent else Color.Gray
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
@@ -230,7 +231,7 @@ fun LocationItem(
                     text = location.city,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White
+                    color = AppTheme.shellText
                 )
                 Text(
                     text = "${location.state}, ${location.country}",
@@ -243,7 +244,7 @@ fun LocationItem(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color(0xFF64B5F6)
+                tint = AppTheme.accent
             )
         }
     }
@@ -260,8 +261,8 @@ fun GpsLocationItem(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .background(
-                if (isSelected) Color(0xFF64B5F6).copy(alpha = 0.2f)
-                else Color(0xFF64B5F6).copy(alpha = 0.08f),
+                if (isSelected) AppTheme.accent.copy(alpha = 0.2f)
+                else AppTheme.accent.copy(alpha = 0.08f),
                 RoundedCornerShape(12.dp)
             )
             .padding(16.dp),
@@ -272,7 +273,7 @@ fun GpsLocationItem(
             Icon(
                 imageVector = Icons.Default.MyLocation,
                 contentDescription = null,
-                tint = if (isSelected) Color(0xFF64B5F6) else Color(0xFF64B5F6).copy(alpha = 0.7f)
+                tint = if (isSelected) AppTheme.accent else AppTheme.accent.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
@@ -280,7 +281,7 @@ fun GpsLocationItem(
                     text = "Current Location",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White
+                    color = AppTheme.shellText
                 )
                 Text(
                     text = "Use GPS",
@@ -292,14 +293,14 @@ fun GpsLocationItem(
         if (isBusy) {
             CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
-                color = Color(0xFF64B5F6),
+                color = AppTheme.accent,
                 strokeWidth = 2.dp
             )
         } else if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color(0xFF64B5F6)
+                tint = AppTheme.accent
             )
         }
     }

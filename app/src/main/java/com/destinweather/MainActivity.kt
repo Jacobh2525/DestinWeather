@@ -21,7 +21,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +37,8 @@ import com.destinweather.ui.screens.RadarScreen
 import com.destinweather.ui.screens.SettingsScreen
 import com.destinweather.ui.screens.SurfScreen
 import com.destinweather.ui.screens.WeatherScreen
+import com.destinweather.ui.theme.AppTheme
+import com.destinweather.ui.theme.DestinWeatherTheme
 import com.destinweather.utils.NotificationHelper
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.AlertsViewModel
@@ -72,6 +73,9 @@ class MainActivity : ComponentActivity() {
         // Initialize preferences
         PreferencesManager.init(this)
 
+        // Restore saved appearance
+        AppTheme.setDark(PreferencesManager.darkModeEnabled)
+
         // Create notification channel
         NotificationHelper.createNotificationChannel(this)
 
@@ -79,6 +83,7 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
 
         setContent {
+            DestinWeatherTheme(darkTheme = AppTheme.isDark) {
             var keepSplashScreen by remember { mutableStateOf(true) }
 
             LaunchedEffect(Unit) {
@@ -120,7 +125,7 @@ class MainActivity : ComponentActivity() {
                 drawerState = drawerState,
                 drawerContent = {
                     ModalDrawerSheet(
-                        drawerContainerColor = Color(0xFF1a1a2e)
+                        drawerContainerColor = AppTheme.shellBackground
                     ) {
                         Column(
                             modifier = Modifier
@@ -131,13 +136,13 @@ class MainActivity : ComponentActivity() {
                                 text = "Destin Weather",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = AppTheme.shellText,
                                 modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
                             )
                             Text(
                                 text = "Your beach weather companion",
                                 fontSize = 14.sp,
-                                color = Color.White.copy(alpha = 0.7f)
+                                color = AppTheme.textSecondary
                             )
 
                             Spacer(modifier = Modifier.height(32.dp))
@@ -154,7 +159,7 @@ class MainActivity : ComponentActivity() {
                             )
 
                             HorizontalDivider(
-                                color = Color.White.copy(alpha = 0.2f),
+                                color = AppTheme.innerDivider,
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
 
@@ -193,20 +198,20 @@ class MainActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Default.Menu,
                                         contentDescription = "Menu",
-                                        tint = Color.White
+                                        tint = AppTheme.shellText
                                     )
                                 }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = Color(0xFF1a1a2e),
-                                titleContentColor = Color.White
+                                containerColor = AppTheme.shellBackground,
+                                titleContentColor = AppTheme.shellText
                             )
                         )
                     },
                     bottomBar = {
                         NavigationBar(
-                            containerColor = Color(0xFF1a1a2e),
-                            contentColor = Color.White
+                            containerColor = AppTheme.shellBackground,
+                            contentColor = AppTheme.shellText
                         ) {
                             items.forEachIndexed { index, item ->
                                 val selected = pagerState.currentPage == index
@@ -226,11 +231,11 @@ class MainActivity : ComponentActivity() {
                                     },
                                     label = { Text(item.title) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = Color(0xFF64B5F6),
-                                        selectedTextColor = Color(0xFF64B5F6),
-                                        unselectedIconColor = Color.White.copy(alpha = 0.6f),
-                                        unselectedTextColor = Color.White.copy(alpha = 0.6f),
-                                        indicatorColor = Color(0xFF64B5F6).copy(alpha = 0.2f)
+                                        selectedIconColor = AppTheme.accent,
+                                        selectedTextColor = AppTheme.accent,
+                                        unselectedIconColor = AppTheme.textMuted,
+                                        unselectedTextColor = AppTheme.textMuted,
+                                        indicatorColor = AppTheme.accent.copy(alpha = 0.2f)
                                     )
                                 )
                             }
@@ -320,6 +325,7 @@ class MainActivity : ComponentActivity() {
                     AlertCheckWorker.schedule(this@MainActivity, lastLat, lastLon)
                 }
             }
+            }
         }
     }
 
@@ -368,14 +374,14 @@ fun DrawerItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color.White.copy(alpha = 0.8f),
+            tint = AppTheme.textPrimary.copy(alpha = 0.8f),
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = title,
             fontSize = 16.sp,
-            color = Color.White,
+            color = AppTheme.shellText,
             fontWeight = FontWeight.Medium
         )
     }

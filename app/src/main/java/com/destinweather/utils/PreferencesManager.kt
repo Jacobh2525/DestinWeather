@@ -32,7 +32,9 @@ object PreferencesManager {
         set(value) = prefs.edit { putBoolean(KEY_USE_FAHRENHEIT, value) }
 
     var darkModeEnabled: Boolean
-        get() = prefs.getBoolean(KEY_DARK_MODE, false)
+        // Default dark: preserves the app's long-standing appearance for
+        // existing installs that never touched the toggle
+        get() = prefs.getBoolean(KEY_DARK_MODE, true)
         set(value) = prefs.edit { putBoolean(KEY_DARK_MODE, value) }
 
     var lastLocation: String

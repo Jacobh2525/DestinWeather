@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.workers.AlertCheckWorker
 
@@ -40,10 +41,8 @@ fun SettingsScreen() {
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E88E5),
-                        Color(0xFF1565C0),
-                        Color(0xFF0D47A1)
+                    colors = AppTheme.gradient(
+                        listOf(Color(0xFF1E88E5), Color(0xFF1565C0), Color(0xFF0D47A1))
                     )
                 )
             )
@@ -59,7 +58,7 @@ fun SettingsScreen() {
                 text = "Settings",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AppTheme.textPrimary
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -77,7 +76,7 @@ fun SettingsScreen() {
                 ) {
                     Text(
                         text = "Use Fahrenheit",
-                        color = Color.White,
+                        color = AppTheme.textPrimary,
                         fontSize = 14.sp
                     )
                     Switch(
@@ -88,8 +87,8 @@ fun SettingsScreen() {
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF64B5F6),
-                            uncheckedThumbColor = Color.White.copy(alpha = 0.6f),
+                            checkedTrackColor = AppTheme.accent,
+                            uncheckedThumbColor = AppTheme.textMuted,
                             uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
                         )
                     )
@@ -111,7 +110,7 @@ fun SettingsScreen() {
                 ) {
                     Text(
                         text = "Enable Push Notifications",
-                        color = Color.White,
+                        color = AppTheme.textPrimary,
                         fontSize = 14.sp
                     )
                     Switch(
@@ -131,8 +130,8 @@ fun SettingsScreen() {
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF64B5F6),
-                            uncheckedThumbColor = Color.White.copy(alpha = 0.6f),
+                            checkedTrackColor = AppTheme.accent,
+                            uncheckedThumbColor = AppTheme.textMuted,
                             uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
                         )
                     )
@@ -154,7 +153,7 @@ fun SettingsScreen() {
                 ) {
                     Text(
                         text = "Dark Mode",
-                        color = Color.White,
+                        color = AppTheme.textPrimary,
                         fontSize = 14.sp
                     )
                     Switch(
@@ -162,11 +161,12 @@ fun SettingsScreen() {
                         onCheckedChange = {
                             darkModeEnabled = it
                             PreferencesManager.darkModeEnabled = it
+                            AppTheme.setDark(it) // applies instantly app-wide
                         },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF64B5F6),
-                            uncheckedThumbColor = Color.White.copy(alpha = 0.6f),
+                            checkedTrackColor = AppTheme.accent,
+                            uncheckedThumbColor = AppTheme.textMuted,
                             uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
                         )
                     )
@@ -184,20 +184,20 @@ fun SettingsScreen() {
                 Column {
                     Text(
                         text = "Destin Weather",
-                        color = Color.White,
+                        color = AppTheme.textPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Your local beach weather app with surf conditions, beach cams, and weather alerts.",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = AppTheme.textSecondary,
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Data sources: OpenWeatherMap, NOAA",
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = AppTheme.textFaint,
                         fontSize = 11.sp
                     )
                 }
@@ -219,7 +219,7 @@ fun SettingsCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.15f)
+            containerColor = AppTheme.cardSurface
         )
     ) {
         Column(
@@ -233,7 +233,7 @@ fun SettingsCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = Color(0xFF64B5F6),
+                    tint = AppTheme.accent,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -242,12 +242,12 @@ fun SettingsCard(
                         text = title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = AppTheme.textPrimary
                     )
                     Text(
                         text = subtitle,
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.6f)
+                        color = AppTheme.textMuted
                     )
                 }
             }

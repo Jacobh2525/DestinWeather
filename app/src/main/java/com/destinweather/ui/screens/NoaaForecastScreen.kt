@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.destinweather.data.model.NoaaPeriod
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.viewmodel.NoaaState
 import com.destinweather.viewmodel.NoaaViewModel
 
@@ -40,10 +41,8 @@ fun NoaaForecastScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E88E5),
-                        Color(0xFF1565C0),
-                        Color(0xFF0D47A1)
+                    colors = AppTheme.gradient(
+                        listOf(Color(0xFF1E88E5), Color(0xFF1565C0), Color(0xFF0D47A1))
                     )
                 )
             )
@@ -69,7 +68,7 @@ fun LoadingContent() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(color = Color.White)
+        CircularProgressIndicator(color = AppTheme.spinner)
     }
 }
 
@@ -91,12 +90,12 @@ fun ForecastContent(periods: List<NoaaPeriod>, afdText: String?, afdOffice: Stri
                 text = "Detailed Forecast",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AppTheme.textPrimary
             )
             Text(
                 text = "National Weather Service",
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f)
+                color = AppTheme.textPrimary.copy(alpha = 0.8f)
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -107,7 +106,7 @@ fun ForecastContent(periods: List<NoaaPeriod>, afdText: String?, afdOffice: Stri
                     text = "Today",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = AppTheme.textPrimary
                 )
             }
 
@@ -123,7 +122,7 @@ fun ForecastContent(periods: List<NoaaPeriod>, afdText: String?, afdOffice: Stri
                     text = "Forecast Discussion",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = AppTheme.textPrimary
                 )
             }
             item {
@@ -138,7 +137,7 @@ fun ForecastContent(periods: List<NoaaPeriod>, afdText: String?, afdOffice: Stri
                     text = "Extended Forecast",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = AppTheme.textPrimary
                 )
             }
 
@@ -161,7 +160,7 @@ fun AfdCard(afdText: String, afdOffice: String?) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.15f)
+            containerColor = AppTheme.cardSurface
         )
     ) {
         Column(
@@ -179,18 +178,18 @@ fun AfdCard(afdText: String, afdOffice: String?) {
                         text = "Area Forecast Discussion",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = AppTheme.textPrimary
                     )
                     Text(
                         text = "NWS ${afdOffice ?: ""} · Forecaster's technical analysis",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = AppTheme.textSecondary
                     )
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = Color.White.copy(alpha = 0.8f),
+                    tint = AppTheme.textPrimary.copy(alpha = 0.8f),
                     modifier = Modifier.clickable { expanded = !expanded }
                 )
             }
@@ -201,7 +200,7 @@ fun AfdCard(afdText: String, afdOffice: String?) {
                 text = if (expanded) afdText else afdText.take(600).trimEnd() + "  …",
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
-                color = Color.White.copy(alpha = 0.9f),
+                color = AppTheme.textPrimary.copy(alpha = 0.9f),
                 lineHeight = 16.sp
             )
 
@@ -209,7 +208,7 @@ fun AfdCard(afdText: String, afdOffice: String?) {
                 text = if (expanded) "Show less" else "Read full discussion",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF64B5F6),
+                color = AppTheme.accent,
                 modifier = Modifier
                     .padding(top = 10.dp)
                     .clickable { expanded = !expanded }
@@ -224,7 +223,7 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.15f)
+            containerColor = AppTheme.cardSurface
         )
     ) {
         Column(
@@ -242,22 +241,22 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
                         text = period.name ?: "",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = AppTheme.textPrimary
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = period.windSpeed ?: "",
                             fontSize = 13.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = AppTheme.textPrimary.copy(alpha = 0.8f)
                         )
                         Text(
                             text = " • ",
-                            color = Color.White.copy(alpha = 0.6f)
+                            color = AppTheme.textMuted
                         )
                         Text(
                             text = period.windDirection ?: "",
                             fontSize = 13.sp,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = AppTheme.textPrimary.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -267,12 +266,12 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
                         text = "${period.temperature ?: ""}°",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = AppTheme.textPrimary
                     )
                     Text(
                         text = period.temperatureUnit ?: "F",
                         fontSize = 14.sp,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = AppTheme.textPrimary.copy(alpha = 0.8f),
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -289,7 +288,7 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
                     text = period.shortForecast ?: "",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.White,
+                    color = AppTheme.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 period.probabilityOfPrecipitation?.value?.let { pop ->
@@ -297,7 +296,7 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
                         Icon(
                             imageVector = Icons.Default.WaterDrop,
                             contentDescription = "Precipitation chance",
-                            tint = Color(0xFF64B5F6),
+                            tint = AppTheme.accent,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -305,7 +304,7 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
                             text = "$pop%",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64B5F6)
+                            color = AppTheme.accent
                         )
                     }
                 }
@@ -316,7 +315,7 @@ fun NoaaPeriodCard(period: NoaaPeriod, isToday: Boolean) {
             Text(
                 text = period.detailedForecast ?: "",
                 fontSize = 13.sp,
-                color = Color.White.copy(alpha = 0.85f),
+                color = AppTheme.textPrimary.copy(alpha = 0.85f),
                 lineHeight = 18.sp
             )
         }
@@ -336,19 +335,19 @@ fun ErrorContent(message: String, onRetry: () -> Unit) {
             imageVector = Icons.Default.CloudOff,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color.White.copy(alpha = 0.6f)
+            tint = AppTheme.textMuted
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Unable to load forecast",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = AppTheme.textPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
-            color = Color.White.copy(alpha = 0.7f)
+            color = AppTheme.textSecondary
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(

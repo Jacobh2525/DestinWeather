@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.destinweather.data.model.NhcStorm
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.HurricaneState
 import com.destinweather.viewmodel.HurricaneViewModel
@@ -43,7 +44,7 @@ fun HurricaneScreen(viewModel: HurricaneViewModel = viewModel()) {
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1c2833), Color(0xFF2e4053), Color(0xFF1a252f))
+                    colors = AppTheme.gradient(listOf(Color(0xFF1c2833), Color(0xFF2e4053), Color(0xFF1a252f)))
                 )
             )
     ) {
@@ -66,7 +67,7 @@ fun HurricaneScreen(viewModel: HurricaneViewModel = viewModel()) {
 @Composable
 private fun HurricaneLoadingContent() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = Color.White)
+        CircularProgressIndicator(color = AppTheme.spinner)
     }
 }
 
@@ -83,14 +84,14 @@ private fun HurricaneContent(storms: List<NhcStorm>, outlook: String?) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Cyclone, null,
-                        tint = Color.White, modifier = Modifier.size(30.dp)
+                        tint = AppTheme.textPrimary, modifier = Modifier.size(30.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("Hurricane Center", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Hurricane Center", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = AppTheme.textPrimary)
                 }
                 Text(
                     "NOAA National Hurricane Center",
-                    fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 13.sp, color = AppTheme.textSecondary,
                     modifier = Modifier.padding(start = 40.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -98,7 +99,7 @@ private fun HurricaneContent(storms: List<NhcStorm>, outlook: String?) {
         }
 
         item {
-            Text("Active Tropical Cyclones", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text("Active Tropical Cyclones", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
         }
 
         if (storms.isEmpty()) {
@@ -110,7 +111,7 @@ private fun HurricaneContent(storms: List<NhcStorm>, outlook: String?) {
         if (!outlook.isNullOrBlank()) {
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Atlantic Tropical Outlook", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text("Atlantic Tropical Outlook", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
             }
             item { OutlookCard(outlook) }
         }
@@ -119,7 +120,7 @@ private fun HurricaneContent(storms: List<NhcStorm>, outlook: String?) {
             Text(
                 "Live data: NOAA / National Hurricane Center",
                 fontSize = 11.sp,
-                color = Color.White.copy(alpha = 0.5f),
+                color = AppTheme.textFaint,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
@@ -132,7 +133,7 @@ private fun QuietTropicsCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
+        colors = CardDefaults.cardColors(containerColor = AppTheme.cardSurface)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(20.dp),
@@ -144,10 +145,10 @@ private fun QuietTropicsCard() {
             )
             Spacer(modifier = Modifier.width(14.dp))
             Column {
-                Text("No active tropical cyclones", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text("No active tropical cyclones", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
                 Text(
                     "The Atlantic and Pacific basins are quiet right now.",
-                    fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f)
+                    fontSize = 13.sp, color = AppTheme.textSecondary
                 )
             }
         }
@@ -245,7 +246,7 @@ private fun OutlookCard(outlook: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))
+        colors = CardDefaults.cardColors(containerColor = AppTheme.cardSurface)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Row(
@@ -256,17 +257,17 @@ private fun OutlookCard(outlook: String) {
                 Column {
                     Text(
                         "Tropical Weather Outlook",
-                        fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White
+                        fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary
                     )
                     Text(
                         "NWS National Hurricane Center · Atlantic basin",
-                        fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f)
+                        fontSize = 12.sp, color = AppTheme.textSecondary
                     )
                 }
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = Color.White.copy(alpha = 0.8f),
+                    tint = AppTheme.textPrimary.copy(alpha = 0.8f),
                     modifier = Modifier.clickable { expanded = !expanded }
                 )
             }
@@ -277,7 +278,7 @@ private fun OutlookCard(outlook: String) {
                 text = if (expanded) outlook else outlook.take(600).trimEnd() + "  …",
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
-                color = Color.White.copy(alpha = 0.9f),
+                color = AppTheme.textPrimary.copy(alpha = 0.9f),
                 lineHeight = 16.sp
             )
 
@@ -285,7 +286,7 @@ private fun OutlookCard(outlook: String) {
                 text = if (expanded) "Show less" else "Read full outlook",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF64B5F6),
+                color = AppTheme.accent,
                 modifier = Modifier
                     .padding(top = 10.dp)
                     .clickable { expanded = !expanded }
@@ -301,11 +302,11 @@ private fun HurricaneErrorContent(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.Warning, null, modifier = Modifier.size(80.dp), tint = Color.White.copy(alpha = 0.6f))
+        Icon(Icons.Default.Warning, null, modifier = Modifier.size(80.dp), tint = AppTheme.textMuted)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppTheme.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, color = Color.White.copy(alpha = 0.7f))
+        Text(message, color = AppTheme.textSecondary)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = Color.White), shape =
             RoundedCornerShape(12.dp)) {

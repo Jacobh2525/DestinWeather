@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.destinweather.data.model.AlertProperties
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.viewmodel.AlertsState
 import com.destinweather.viewmodel.AlertsViewModel
 
@@ -40,10 +41,8 @@ fun AlertsScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1E88E5),
-                        Color(0xFF1565C0),
-                        Color(0xFF0D47A1)
+                    colors = AppTheme.gradient(
+                        listOf(Color(0xFF1E88E5), Color(0xFF1565C0), Color(0xFF0D47A1))
                     )
                 )
             )
@@ -70,7 +69,7 @@ private fun AlertsLoadingContent() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(color = Color.White)
+        CircularProgressIndicator(color = AppTheme.spinner)
     }
 }
 
@@ -89,19 +88,19 @@ fun AlertsContent(alerts: List<AlertProperties>) {
                 text = "Weather Alerts",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AppTheme.textPrimary
             )
             Text(
                 text = "National Weather Service",
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f)
+                color = AppTheme.textPrimary.copy(alpha = 0.8f)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "${alerts.size} active alert${if (alerts.size > 1) "s" else ""}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF64B5F6)
+                color = AppTheme.accent
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -179,7 +178,7 @@ fun AlertCard(alert: AlertProperties) {
                     Text(
                         text = alert.areaDesc ?: "",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.7f)
+                        color = AppTheme.textSecondary
                     )
                 }
                 // Severity badge
@@ -205,7 +204,7 @@ fun AlertCard(alert: AlertProperties) {
                     text = alert.headline,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = AppTheme.textPrimary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -215,7 +214,7 @@ fun AlertCard(alert: AlertProperties) {
                 Text(
                     text = alert.description,
                     fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = AppTheme.textPrimary.copy(alpha = 0.85f),
                     lineHeight = 18.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -227,7 +226,7 @@ fun AlertCard(alert: AlertProperties) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.1f))
+                        .background(AppTheme.cardInner)
                         .padding(12.dp)
                 ) {
                     Icon(
@@ -240,7 +239,7 @@ fun AlertCard(alert: AlertProperties) {
                     Text(
                         text = alert.instruction,
                         fontSize = 13.sp,
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = AppTheme.textPrimary.copy(alpha = 0.9f),
                         lineHeight = 18.sp
                     )
                 }
@@ -255,14 +254,14 @@ fun AlertCard(alert: AlertProperties) {
                 Icon(
                     imageVector = Icons.Default.Schedule,
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.6f),
+                    tint = AppTheme.textMuted,
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Expires: ${alert.expires ?: "Unknown"}",
                     fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.6f)
+                    color = AppTheme.textMuted
                 )
             }
         }
@@ -290,13 +289,13 @@ fun AlertsEmptyContent() {
                 text = "All Clear!",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = AppTheme.textPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "No active weather alerts for this location.",
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f)
+                color = AppTheme.textPrimary.copy(alpha = 0.8f)
             )
         }
     }
@@ -315,19 +314,19 @@ fun AlertsErrorContent(message: String, onRetry: () -> Unit) {
             imageVector = Icons.Default.Error,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color.White.copy(alpha = 0.6f)
+            tint = AppTheme.textMuted
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Unable to load alerts",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = AppTheme.textPrimary
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
-            color = Color.White.copy(alpha = 0.7f)
+            color = AppTheme.textSecondary
         )
         Spacer(modifier = Modifier.height(24.dp))
         Button(

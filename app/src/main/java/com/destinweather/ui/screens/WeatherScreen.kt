@@ -35,6 +35,7 @@ import coil.compose.AsyncImage
 import com.destinweather.data.model.ForecastItem
 import com.destinweather.data.model.ForecastResponse
 import com.destinweather.data.model.WeatherResponse
+import com.destinweather.ui.theme.AppTheme
 import com.destinweather.ui.theme.WeatherBackground
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.viewmodel.WeatherState
@@ -61,7 +62,7 @@ fun WeatherScreen(
                 val isNight = WeatherBackground.isNightTime(state.weather.sys.sunrise, state.weather.sys.sunset)
                 val weatherStyle = WeatherBackground.getWeatherStyle(conditionCode, isNight)
 
-                Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = weatherStyle.colors))) {
+                Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = AppTheme.gradient(weatherStyle.colors)))) {
                     PullToRefreshBox(
                         state = pullToRefreshState,
                         isRefreshing = isRefreshing,
@@ -73,8 +74,8 @@ fun WeatherScreen(
                 }
             }
             is WeatherState.Error -> {
-                Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = listOf(Color(0xFF1E88E5),
-                    Color(0xFF1565C0), Color(0xFF0D47A1))))) {
+                Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(colors = AppTheme.gradient(listOf(Color(0xFF1E88E5),
+                    Color(0xFF1565C0), Color(0xFF0D47A1)))))) {
                     WeatherErrorContent(state.message) { viewModel.fetchWeather() }
                 }
             }
@@ -97,9 +98,9 @@ private fun WeatherLoadingContent() {
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.Cloud, null, modifier = Modifier.size(80.dp).scale(scale), tint = Color.White)
+            Icon(Icons.Default.Cloud, null, modifier = Modifier.size(80.dp).scale(scale), tint = AppTheme.textPrimary)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Loading weather...", color = Color.White, fontSize = 16.sp)
+            Text("Loading weather...", color = AppTheme.textPrimary, fontSize = 16.sp)
         }
     }
 }
@@ -124,12 +125,12 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, uvIndex
         // City Name
         Row(modifier = Modifier.clickable { onLocationClick() }.padding(8.dp), verticalAlignment =
             Alignment.CenterVertically) {
-            Icon(Icons.Default.LocationOn, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.LocationOn, null, tint = AppTheme.textPrimary.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(4.dp))
             Text("${weather.cityName}, ${weather.sys.country}", fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color =
-                Color.White)
+                AppTheme.textPrimary)
             Spacer(modifier = Modifier.width(4.dp))
-            Icon(Icons.Default.KeyboardArrowDown, "Change location", tint = Color.White.copy(alpha = 0.8f), modifier =
+            Icon(Icons.Default.KeyboardArrowDown, "Change location", tint = AppTheme.textPrimary.copy(alpha = 0.8f), modifier =
                 Modifier.size(20.dp))
         }
 
@@ -142,16 +143,16 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, uvIndex
             modifier = Modifier.size(140.dp)
         )
 
-        Text("${weather.main.temp.toInt()}°", fontSize = 80.sp, fontWeight = FontWeight.Light, color = Color.White)
+        Text("${weather.main.temp.toInt()}°", fontSize = 80.sp, fontWeight = FontWeight.Light, color = AppTheme.textPrimary)
         Text(weather.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "", fontSize = 20.sp, color =
-            Color.White.copy(alpha = 0.9f))
+            AppTheme.textPrimary.copy(alpha = 0.9f))
 
         val todayTemps = forecast.list.filter {
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.dt * 1000)) == today
         }
         val highTemp = todayTemps.maxOfOrNull { it.main.temp }?.toInt() ?: weather.main.temp.toInt()
         val lowTemp = todayTemps.minOfOrNull { it.main.temp }?.toInt() ?: weather.main.temp.toInt()
-        Text("H: ${highTemp}°  •  L: ${lowTemp}°", fontSize = 16.sp, color = Color.White.copy(alpha = 0.8f))
+        Text("H: ${highTemp}°  •  L: ${lowTemp}°", fontSize = 16.sp, color = AppTheme.textPrimary.copy(alpha = 0.8f))
 
         Spacer(modifier = Modifier.height(28.dp))
 
@@ -264,14 +265,14 @@ fun WeatherContent(weather: WeatherResponse, forecast: ForecastResponse, uvIndex
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        Text("Today", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier =
+        Text("Today", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary, modifier =
             Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(hourlyToday) { HourlyCard(it) } }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("5-Day Forecast", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White, modifier =
+        Text("5-Day Forecast", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary, modifier =
             Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
         ForecastSection(forecast)
@@ -287,30 +288,30 @@ List<Pair<String, String>>) {
     val rotationAngle by animateFloatAsState(if (expanded) 180f else 0f, label = "rotation")
 
     Card(modifier = modifier.clickable { expanded = !expanded }, shape = RoundedCornerShape(16.dp), colors =
-        CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))) {
+        CardDefaults.cardColors(containerColor = AppTheme.cardSurface)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)),
+                Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(AppTheme.iconCircle),
                     contentAlignment = Alignment.Center) {
-                    Icon(icon, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Icon(icon, null, tint = AppTheme.textPrimary, modifier = Modifier.size(18.dp))
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(title, fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                    Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                    Text(title, fontSize = 11.sp, color = AppTheme.textSecondary)
+                    Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
                 }
-                Icon(Icons.Default.KeyboardArrowDown, null, tint = Color.White.copy(alpha = 0.7f), modifier =
+                Icon(Icons.Default.KeyboardArrowDown, null, tint = AppTheme.textSecondary, modifier =
                     Modifier.rotate(rotationAngle))
             }
 
             AnimatedVisibility(visible = expanded, enter = expandVertically(), exit = shrinkVertically()) {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
+                    HorizontalDivider(color = AppTheme.innerDivider)
                     Spacer(modifier = Modifier.height(8.dp))
                     details.forEach { (label, extra) ->
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
-                            if (extra.isNotEmpty()) Text(extra, fontSize = 11.sp, color = Color.White.copy(alpha = 0.6f))
+                            Text(label, fontSize = 11.sp, color = AppTheme.textPrimary.copy(alpha = 0.8f))
+                            if (extra.isNotEmpty()) Text(extra, fontSize = 11.sp, color = AppTheme.textMuted)
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                     }
@@ -392,18 +393,18 @@ fun HourlyCard(item: ForecastItem) {
     val precipChance = ((item.pop ?: 0.0) * 100).toInt()
 
     Card(modifier = Modifier.width(72.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor
-    = Color.White.copy(alpha = 0.15f))) {
+    = AppTheme.cardSurface)) {
         Column(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(time, fontSize = 11.sp, color = Color.White.copy(alpha = 0.8f))
+            Text(time, fontSize = 11.sp, color = AppTheme.textPrimary.copy(alpha = 0.8f))
             Spacer(modifier = Modifier.height(6.dp))
             AsyncImage(model = iconUrl, contentDescription = null, modifier = Modifier.size(32.dp))
             Spacer(modifier = Modifier.height(6.dp))
-            Text("${item.main.temp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text("${item.main.temp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
             if (precipChance > 0) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.WaterDrop, null, tint = Color(0xFF64B5F6), modifier = Modifier.size(10.dp))
-                    Text("$precipChance%", fontSize = 10.sp, color = Color(0xFF64B5F6))
+                    Icon(Icons.Default.WaterDrop, null, tint = AppTheme.accent, modifier = Modifier.size(10.dp))
+                    Text("$precipChance%", fontSize = 10.sp, color = AppTheme.accent)
                 }
             }
         }
@@ -434,28 +435,28 @@ fun ForecastRowCard(item: ForecastItem, highTemp: Double, lowTemp: Double) {
     val precipChance = ((item.pop ?: 0.0) * 100).toInt()
 
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors =
-        CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.15f))) {
+        CardDefaults.cardColors(containerColor = AppTheme.cardSurface)) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment =
             Alignment.CenterVertically) {
             Column(modifier = Modifier.width(70.dp)) {
-                Text(dayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+                Text(dayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary)
                 Text(SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(item.dt * 1000)), fontSize = 12.sp, color =
-                    Color.White.copy(alpha = 0.7f))
+                    AppTheme.textSecondary)
             }
             Spacer(modifier = Modifier.width(8.dp))
             AsyncImage(model = iconUrl, contentDescription = null, modifier = Modifier.size(40.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(item.weather.firstOrNull()?.main ?: "", modifier = Modifier.weight(1f), fontSize = 13.sp, color =
-                Color.White.copy(alpha = 0.8f))
+                AppTheme.textPrimary.copy(alpha = 0.8f))
             if (precipChance > 20) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.width(45.dp)) {
-                    Icon(Icons.Default.WaterDrop, null, tint = Color(0xFF64B5F6), modifier = Modifier.size(14.dp))
-                    Text("$precipChance%", fontSize = 12.sp, color = Color(0xFF64B5F6))
+                    Icon(Icons.Default.WaterDrop, null, tint = AppTheme.accent, modifier = Modifier.size(14.dp))
+                    Text("$precipChance%", fontSize = 12.sp, color = AppTheme.accent)
                 }
             } else { Spacer(modifier = Modifier.width(45.dp)) }
-            Text("${highTemp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White,
+            Text("${highTemp.toInt()}°", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = AppTheme.textPrimary,
                 modifier = Modifier.width(40.dp))
-            Text("${lowTemp.toInt()}°", fontSize = 14.sp, color = Color.White.copy(alpha = 0.6f))
+            Text("${lowTemp.toInt()}°", fontSize = 14.sp, color = AppTheme.textMuted)
         }
     }
 }
@@ -464,11 +465,11 @@ fun ForecastRowCard(item: ForecastItem, highTemp: Double, lowTemp: Double) {
 private fun WeatherErrorContent(message: String, onRetry: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(80.dp), tint = Color.White.copy(alpha = 0.6f))
+        Icon(Icons.Default.CloudOff, null, modifier = Modifier.size(80.dp), tint = AppTheme.textMuted)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text("Oops!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = AppTheme.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(message, color = Color.White.copy(alpha = 0.7f))
+        Text(message, color = AppTheme.textSecondary)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = Color.White), shape =
             RoundedCornerShape(12.dp)) {
