@@ -120,13 +120,26 @@ object SurfData {
     }
 
     /**
-     * GPS path: waves and wind at the exact coordinates; buoy and tide
-     * station chains borrowed from the nearest preset location.
+     * GPS path: within ~10 miles of a preset beach this snaps to the full
+     * preset experience (its named spots, coordinates and stations), so a
+     * user near Destin sees Destin Harbor & friends rather than generic
+     * cards. Farther out, waves and wind come from the exact GPS position
+     * with buoy/tide chains borrowed from the nearest preset location.
      */
     suspend fun getSurfConditionsAt(lat: Double, lon: Double, cityName: String?): List<SurfConditions> {
-        val nearest = nearestPresetKey(lat, lon)
+        val nearest = locationCoords.minByOrNull { (_, c) ->
+            distanceMiles(lat, lon, c.first, c.second)
+        }
+        val nearestKey = nearest?.key
+        val nearestDist = nearest?.value?.let { distanceMiles(lat, lon, it.first, it.second) }
+            ?: Double.MAX_VALUE
+
+        if (nearestKey != null && nearestDist <= SNAP_RADIUS_MILES) {
+            return getSurfConditions(nearestKey)
+        }
+
         val spotBase = cityName?.substringBefore(",")?.trim()?.takeIf { it.isNotBlank() }
-            ?: nearest?.substringBefore(",")
+            ?: nearestKey?.substringBefore(",")
             ?: "Local"
         val spotNames = listOf(
             "$spotBase Beach", "$spotBase Pier", "$spotBase Point",
@@ -134,18 +147,19 @@ object SurfData {
         )
         return fetchSurf(
             lat, lon, spotNames,
-            nearest?.let { buoyStations[it] } ?: emptyList(),
-            nearest?.let { tideStations[it] } ?: ""
+            nearestKey?.let { buoyStations[it] } ?: emptyList(),
+            nearestKey?.let { tideStations[it] } ?: ""
         )
     }
 
-    // Closest preset location by simple planar distance (fine at these scales)
-    private fun nearestPresetKey(lat: Double, lon: Double): String? =
-        locationCoords.minByOrNull { (_, c) ->
-            val dLat = lat - c.first
-            val dLon = lon - c.second
-            dLat * dLat + dLon * dLon
-        }?.key
+    private const val SNAP_RADIUS_MILES = 10.0
+
+    // Planar approximation with longitude convergence; fine at these scales
+    private fun distanceMiles(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val dLat = (lat1 - lat2) * 69.0
+        val dLon = (lon1 - lon2) * 69.0 * kotlin.math.cos(Math.toRadians((lat1 + lat2) / 2.0))
+        return kotlin.math.sqrt(dLat * dLat + dLon * dLon)
+    }
 
     private suspend fun fetchSurf(
         lat: Double,
