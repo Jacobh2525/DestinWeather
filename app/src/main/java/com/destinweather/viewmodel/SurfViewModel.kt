@@ -20,6 +20,13 @@ class SurfViewModel : ViewModel() {
     private val _surfState = MutableStateFlow<SurfState>(SurfState.Loading)
     val surfState: StateFlow<SurfState> = _surfState
 
+    // GPS mode: fetch by coordinates instead of a preset location key
+    private var gpsMode = PreferencesManager.lastLocationGps
+    private var gpsLat = PreferencesManager.lastLat
+    private var gpsLon = PreferencesManager.lastLon
+    private var gpsCity: String? =
+        if (gpsMode) PreferencesManager.lastLocation.substringBefore(",") else null
+
     init {
         fetchSurfData()
     }
@@ -31,7 +38,11 @@ class SurfViewModel : ViewModel() {
                 _surfState.value = SurfState.Loading
             }
             try {
-                val surfList = SurfData.getSurfConditions(location)
+                val surfList = if (gpsMode) {
+                    SurfData.getSurfConditionsAt(gpsLat, gpsLon, gpsCity)
+                } else {
+                    SurfData.getSurfConditions(location)
+                }
                 _surfState.value = SurfState.Success(surfList)
             } catch (e: Exception) {
                 _surfState.value = SurfState.Error(e.message ?: "Unknown error")
@@ -40,6 +51,15 @@ class SurfViewModel : ViewModel() {
     }
 
     fun setLocation(location: String) {
+        gpsMode = false
         fetchSurfData(location)
+    }
+
+    fun setGpsLocation(displayName: String, lat: Double, lon: Double) {
+        gpsMode = true
+        gpsLat = lat
+        gpsLon = lon
+        gpsCity = displayName.substringBefore(",")
+        fetchSurfData()
     }
 }

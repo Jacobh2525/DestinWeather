@@ -32,6 +32,11 @@ class WeatherViewModel : ViewModel() {
     private val _currentLocation = MutableStateFlow(PreferencesManager.lastLocation)
     val currentLocation: StateFlow<String> = _currentLocation
 
+    // GPS mode: fetch by coordinates instead of a city-name query
+    private var gpsMode = PreferencesManager.lastLocationGps
+    private var gpsLat = PreferencesManager.lastLat
+    private var gpsLon = PreferencesManager.lastLon
+
     init {
         fetchWeather()
     }
@@ -42,12 +47,18 @@ class WeatherViewModel : ViewModel() {
             if (_weatherState.value !is WeatherState.Success) {
                 _weatherState.value = WeatherState.Loading
             }
-            _currentLocation.value = location
+            if (!gpsMode) _currentLocation.value = location
             try {
                 val useFahrenheit = PreferencesManager.useFahrenheit
                 val units = if (useFahrenheit) "imperial" else "metric"
-                val weatherDeferred = async { RetrofitClient.weatherApi.getWeather(city = location, units = units) }
-                val forecastDeferred = async { RetrofitClient.weatherApi.getForecast(city = location, units = units) }
+                val weatherDeferred = async {
+                    if (gpsMode) RetrofitClient.weatherApi.getWeatherByCoords(gpsLat, gpsLon, units)
+                    else RetrofitClient.weatherApi.getWeather(city = location, units = units)
+                }
+                val forecastDeferred = async {
+                    if (gpsMode) RetrofitClient.weatherApi.getForecastByCoords(gpsLat, gpsLon, units)
+                    else RetrofitClient.weatherApi.getForecast(city = location, units = units)
+                }
                 val weather = weatherDeferred.await()
                 val forecast = forecastDeferred.await()
 
@@ -74,6 +85,15 @@ class WeatherViewModel : ViewModel() {
     }
 
     fun setLocation(location: String) {
+        gpsMode = false
         fetchWeather(location)
+    }
+
+    fun setGpsLocation(displayName: String, lat: Double, lon: Double) {
+        gpsMode = true
+        gpsLat = lat
+        gpsLon = lon
+        _currentLocation.value = displayName
+        fetchWeather()
     }
 }

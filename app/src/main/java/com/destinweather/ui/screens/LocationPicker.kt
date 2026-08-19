@@ -1,5 +1,9 @@
 package com.destinweather.ui.screens
 
+import android.Manifest
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,9 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.destinweather.utils.GpsLocationHelper
+import kotlinx.coroutines.launch
 
 // Preset locations for surf/weather with coordinates
 val presetLocations = listOf(
@@ -51,11 +58,41 @@ data class Location(
 @Composable
 fun LocationPickerSheet(
     currentLocation: String,
+    gpsActive: Boolean,
     onLocationSelected: (String, Double, Double) -> Unit,
+    onGpsLocationSelected: (String, Double, Double) -> Unit,
     onDismiss: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var gpsBusy by remember { mutableStateOf(false) }
+
+    fun fetchGpsAndSelect() {
+        scope.launch {
+            gpsBusy = true
+            val coords = GpsLocationHelper.getCurrentLocation(context)
+            if (coords == null) {
+                gpsBusy = false
+                Toast.makeText(context, "Couldn't determine GPS location", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val name = GpsLocationHelper.reverseGeocodeCity(context, coords.first, coords.second)
+                ?: "Current Location"
+            gpsBusy = false
+            onGpsLocationSelected(name, coords.first, coords.second)
+            onDismiss()
+        }
+    }
+
+    val gpsPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) fetchGpsAndSelect()
+        else Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
+    }
 
     val filteredLocations = if (searchQuery.isBlank()) {
         presetLocations
@@ -131,6 +168,20 @@ fun LocationPickerSheet(
                 modifier = Modifier.heightIn(max = 400.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    GpsLocationItem(
+                        isSelected = gpsActive,
+                        isBusy = gpsBusy,
+                        onClick = {
+                            if (gpsBusy) return@GpsLocationItem
+                            if (GpsLocationHelper.hasLocationPermission(context)) {
+                                fetchGpsAndSelect()
+                            } else {
+                                gpsPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                            }
+                        }
+                    )
+                }
                 items(filteredLocations) { location ->
                     LocationItem(
                         location = location,
@@ -189,6 +240,62 @@ fun LocationItem(
             }
         }
         if (isSelected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF64B5F6)
+            )
+        }
+    }
+}
+
+@Composable
+fun GpsLocationItem(
+    isSelected: Boolean,
+    isBusy: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(
+                if (isSelected) Color(0xFF64B5F6).copy(alpha = 0.2f)
+                else Color(0xFF64B5F6).copy(alpha = 0.08f),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.MyLocation,
+                contentDescription = null,
+                tint = if (isSelected) Color(0xFF64B5F6) else Color(0xFF64B5F6).copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "Current Location",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Text(
+                    text = "Use GPS",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+            }
+        }
+        if (isBusy) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = Color(0xFF64B5F6),
+                strokeWidth = 2.dp
+            )
+        } else if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,

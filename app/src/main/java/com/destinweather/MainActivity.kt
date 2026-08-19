@@ -276,6 +276,7 @@ class MainActivity : ComponentActivity() {
             if (showLocationPicker) {
                 LocationPickerSheet(
                     currentLocation = currentLocation,
+                    gpsActive = PreferencesManager.lastLocationGps,
                     onLocationSelected = { location, lat, lon ->
                         weatherViewModel.setLocation(location)
                         surfViewModel.setLocation(location)
@@ -287,6 +288,24 @@ class MainActivity : ComponentActivity() {
                         PreferencesManager.lastLocation = location
                         PreferencesManager.lastLat = lat
                         PreferencesManager.lastLon = lon
+                        PreferencesManager.lastLocationGps = false
+
+                        if (PreferencesManager.notificationsEnabled) {
+                            AlertCheckWorker.schedule(this, lat, lon)
+                        }
+                    },
+                    onGpsLocationSelected = { displayName, lat, lon ->
+                        weatherViewModel.setGpsLocation(displayName, lat, lon)
+                        surfViewModel.setGpsLocation(displayName, lat, lon)
+                        noaaViewModel.setLocation(lat, lon)
+                        alertsViewModel.setLocation(lat, lon)
+                        radarViewModel.setLocation(lat, lon)
+
+                        // Save GPS location preference
+                        PreferencesManager.lastLocation = displayName
+                        PreferencesManager.lastLat = lat
+                        PreferencesManager.lastLon = lon
+                        PreferencesManager.lastLocationGps = true
 
                         if (PreferencesManager.notificationsEnabled) {
                             AlertCheckWorker.schedule(this, lat, lon)

@@ -22,4 +22,19 @@ interface WeatherApi {
         @Query("units") units: String = "imperial"
     ): ForecastResponse
 
+    // GPS mode: query by coordinates instead of city name
+    @GET("weather")
+    suspend fun getWeatherByCoords(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("units") units: String = "imperial"
+    ): WeatherResponse
+
+    @GET("forecast")
+    suspend fun getForecastByCoords(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("units") units: String = "imperial"
+    ): ForecastResponse
+
 }

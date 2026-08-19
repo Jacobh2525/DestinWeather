@@ -14,6 +14,7 @@ object PreferencesManager {
     private const val KEY_LAST_LOCATION = "last_location"
     private const val KEY_LAST_LAT = "last_lat"
     private const val KEY_LAST_LON = "last_lon"
+    private const val KEY_LAST_LOCATION_GPS = "last_location_gps"
     private const val KEY_NOTIFIED_ALERTS = "notified_alerts"
 
     private lateinit var prefs: SharedPreferences
@@ -45,6 +46,11 @@ object PreferencesManager {
     var lastLon: Double
         get() = prefs.getFloat(KEY_LAST_LON, -86.4958f).toDouble()
         set(value) = prefs.edit { putFloat(KEY_LAST_LON, value.toFloat()) }
+
+    // True when the saved location came from GPS rather than a preset city
+    var lastLocationGps: Boolean
+        get() = prefs.getBoolean(KEY_LAST_LOCATION_GPS, false)
+        set(value) = prefs.edit { putBoolean(KEY_LAST_LOCATION_GPS, value) }
 
     // IDs of severe alerts already notified (dedup background worker)
     var notifiedAlertIds: Set<String>

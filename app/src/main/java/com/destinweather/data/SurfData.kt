@@ -102,7 +102,7 @@ object SurfData {
         0.0 to 0.0, 0.04 to 0.05, -0.04 to -0.05, 0.08 to 0.09, -0.07 to -0.09
     )
 
-    suspend fun getSurfConditions(location: String): List<SurfConditions> = withContext(Dispatchers.IO) {
+    suspend fun getSurfConditions(location: String): List<SurfConditions> {
         val (lat, lon) = locationCoords[location]
             ?: throw IOException("Unknown location: $location")
 
@@ -112,6 +112,48 @@ object SurfData {
             }
             ?: throw IOException("No surf spots for: $location")
 
+        return fetchSurf(
+            lat, lon, spotNames,
+            buoyStations[location] ?: emptyList(),
+            tideStations[location] ?: ""
+        )
+    }
+
+    /**
+     * GPS path: waves and wind at the exact coordinates; buoy and tide
+     * station chains borrowed from the nearest preset location.
+     */
+    suspend fun getSurfConditionsAt(lat: Double, lon: Double, cityName: String?): List<SurfConditions> {
+        val nearest = nearestPresetKey(lat, lon)
+        val spotBase = cityName?.substringBefore(",")?.trim()?.takeIf { it.isNotBlank() }
+            ?: nearest?.substringBefore(",")
+            ?: "Local"
+        val spotNames = listOf(
+            "$spotBase Beach", "$spotBase Pier", "$spotBase Point",
+            "North $spotBase", "South $spotBase"
+        )
+        return fetchSurf(
+            lat, lon, spotNames,
+            nearest?.let { buoyStations[it] } ?: emptyList(),
+            nearest?.let { tideStations[it] } ?: ""
+        )
+    }
+
+    // Closest preset location by simple planar distance (fine at these scales)
+    private fun nearestPresetKey(lat: Double, lon: Double): String? =
+        locationCoords.minByOrNull { (_, c) ->
+            val dLat = lat - c.first
+            val dLon = lon - c.second
+            dLat * dLat + dLon * dLon
+        }?.key
+
+    private suspend fun fetchSurf(
+        lat: Double,
+        lon: Double,
+        spotNames: List<String>,
+        buoyIds: List<String>,
+        tideStation: String
+    ): List<SurfConditions> = withContext(Dispatchers.IO) {
         val coords = spotOffsets.take(spotNames.size)
         val lats = coords.joinToString(",") { "%.4f".format(lat + it.first) }
         val lons = coords.joinToString(",") { "%.4f".format(lon + it.second) }
@@ -122,10 +164,10 @@ object SurfData {
                 runCatching { RetrofitClient.openMeteoApi.getWind(lat, lon) }.getOrNull()
             }
             val waterTempDeferred = async {
-                NdbcClient.getWaterTempF(buoyStations[location] ?: emptyList())
+                NdbcClient.getWaterTempF(buoyIds)
             }
             val tideDeferred = async {
-                TideClient.getTideState(tideStations[location] ?: "")
+                TideClient.getTideState(tideStation)
             }
 
             // Marine data is essential - a failure here surfaces as SurfState.Error
