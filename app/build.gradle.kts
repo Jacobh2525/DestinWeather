@@ -106,4 +106,7 @@ dependencies {
 
     // MapLibre (radar screen)
     implementation(libs.ramani.maps)
+
+    // Glance (home screen widget)
+    implementation(libs.androidx.glance.appwidget)
 }
