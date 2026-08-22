@@ -48,6 +48,8 @@ import com.destinweather.viewmodel.RadarViewModel
 import com.destinweather.viewmodel.SurfViewModel
 import com.destinweather.viewmodel.WeatherViewModel
 import com.destinweather.workers.AlertCheckWorker
+import com.destinweather.workers.BriefingWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -323,6 +325,10 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 if (PreferencesManager.notificationsEnabled) {
                     AlertCheckWorker.schedule(this@MainActivity, lastLat, lastLon)
+                }
+                // Re-arm the briefing after updates/reinstalls without disturbing its 7 AM timing
+                if (PreferencesManager.briefingEnabled) {
+                    BriefingWorker.schedule(this@MainActivity, ExistingPeriodicWorkPolicy.KEEP)
                 }
             }
             }

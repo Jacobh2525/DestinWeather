@@ -2,6 +2,7 @@ package com.destinweather.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.destinweather.data.AfdFetcher
 import com.destinweather.data.api.RetrofitClient
 import com.destinweather.data.model.NoaaPeriod
 import com.destinweather.utils.PreferencesManager
@@ -78,12 +79,8 @@ class NoaaViewModel : ViewModel() {
         }
     }
 
-    private suspend fun fetchLatestAfd(cwa: String?): String? {
-        if (cwa.isNullOrBlank()) return null
-        val list = RetrofitClient.noaaApi.getAfdList(cwa)
-        val latestId = list.products?.firstOrNull()?.id ?: return null
-        return RetrofitClient.noaaApi.getProduct(latestId).productText
-    }
+    private suspend fun fetchLatestAfd(cwa: String?): String? =
+        AfdFetcher.fetchLatestText(cwa)
 
     fun setLocation(lat: Double, lon: Double) {
         fetchNoaaForecast(lat, lon)

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import com.destinweather.ui.theme.AppTheme
 import com.destinweather.utils.PreferencesManager
 import com.destinweather.workers.AlertCheckWorker
+import com.destinweather.workers.BriefingWorker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +35,9 @@ fun SettingsScreen() {
     }
     var darkModeEnabled by remember {
         mutableStateOf(PreferencesManager.darkModeEnabled)
+    }
+    var briefingEnabled by remember {
+        mutableStateOf(PreferencesManager.briefingEnabled)
     }
 
     Box(
@@ -126,6 +130,46 @@ fun SettingsScreen() {
                                 )
                             } else {
                                 AlertCheckWorker.cancel(context)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = AppTheme.accent,
+                            uncheckedThumbColor = AppTheme.textMuted,
+                            uncheckedTrackColor = Color.White.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Morning Briefing
+            SettingsCard(
+                title = "Morning Briefing",
+                subtitle = "Daily 7 AM forecast + NWS discussion",
+                icon = Icons.Default.WbTwilight
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Daily morning notification",
+                        color = AppTheme.textPrimary,
+                        fontSize = 14.sp
+                    )
+                    Switch(
+                        checked = briefingEnabled,
+                        onCheckedChange = { enabled ->
+                            briefingEnabled = enabled
+                            PreferencesManager.briefingEnabled = enabled
+                            if (enabled) {
+                                BriefingWorker.schedule(context)
+                                BriefingWorker.sendNow(context) // immediate preview
+                            } else {
+                                BriefingWorker.cancel(context)
                             }
                         },
                         colors = SwitchDefaults.colors(

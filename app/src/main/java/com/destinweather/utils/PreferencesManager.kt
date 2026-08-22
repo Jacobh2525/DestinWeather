@@ -16,6 +16,7 @@ object PreferencesManager {
     private const val KEY_LAST_LON = "last_lon"
     private const val KEY_LAST_LOCATION_GPS = "last_location_gps"
     private const val KEY_NOTIFIED_ALERTS = "notified_alerts"
+    private const val KEY_BRIEFING_ENABLED = "briefing_enabled"
 
     private lateinit var prefs: SharedPreferences
 
@@ -53,6 +54,11 @@ object PreferencesManager {
     var lastLocationGps: Boolean
         get() = prefs.getBoolean(KEY_LAST_LOCATION_GPS, false)
         set(value) = prefs.edit { putBoolean(KEY_LAST_LOCATION_GPS, value) }
+
+    // Daily 7 AM briefing notification (opt-in)
+    var briefingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_BRIEFING_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(KEY_BRIEFING_ENABLED, value) }
 
     // IDs of severe alerts already notified (dedup background worker)
     var notifiedAlertIds: Set<String>

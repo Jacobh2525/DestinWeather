@@ -17,6 +17,10 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "Weather Alerts"
     private const val CHANNEL_DESC = "Severe weather alerts and notifications"
 
+    private const val BRIEFING_CHANNEL_ID = "morning_briefing"
+    private const val BRIEFING_CHANNEL_NAME = "Morning Briefing"
+    private const val BRIEFING_NOTIFICATION_ID = 1001
+
     fun createNotificationChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_HIGH
@@ -66,6 +70,47 @@ object NotificationHelper {
 
         try {
             NotificationManagerCompat.from(context).notify(alertId.hashCode(), builder.build())
+        } catch (_: SecurityException) {
+            // Permission not granted
+        }
+    }
+
+    private fun createBriefingChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // DEFAULT importance: informational, no heads-up intrusion
+            val channel = NotificationChannel(
+                BRIEFING_CHANNEL_ID,
+                BRIEFING_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Daily morning forecast and NWS forecaster discussion"
+            }
+            context.getSystemService(NotificationManager::class.java)
+                ?.createNotificationChannel(channel)
+        }
+    }
+
+    fun showMorningBriefing(context: Context, title: String, text: String, bigText: String) {
+        createBriefingChannel(context) // worker may run before the app ever opened
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent, PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, BRIEFING_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        try {
+            NotificationManagerCompat.from(context).notify(BRIEFING_NOTIFICATION_ID, builder.build())
         } catch (_: SecurityException) {
             // Permission not granted
         }
