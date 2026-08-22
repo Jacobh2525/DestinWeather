@@ -17,6 +17,9 @@ object PreferencesManager {
     private const val KEY_LAST_LOCATION_GPS = "last_location_gps"
     private const val KEY_NOTIFIED_ALERTS = "notified_alerts"
     private const val KEY_BRIEFING_ENABLED = "briefing_enabled"
+    private const val KEY_BRIEFING_TITLE = "briefing_title"
+    private const val KEY_BRIEFING_BODY = "briefing_body"
+    private const val KEY_BRIEFING_TIME = "briefing_time"
 
     private lateinit var prefs: SharedPreferences
 
@@ -59,6 +62,19 @@ object PreferencesManager {
     var briefingEnabled: Boolean
         get() = prefs.getBoolean(KEY_BRIEFING_ENABLED, false)
         set(value) = prefs.edit { putBoolean(KEY_BRIEFING_ENABLED, value) }
+
+    // Last briefing content, so tapping the notification can show it in full
+    var briefingTitle: String
+        get() = prefs.getString(KEY_BRIEFING_TITLE, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_BRIEFING_TITLE, value) }
+
+    var briefingBody: String
+        get() = prefs.getString(KEY_BRIEFING_BODY, "") ?: ""
+        set(value) = prefs.edit { putString(KEY_BRIEFING_BODY, value) }
+
+    var briefingTime: Long
+        get() = prefs.getLong(KEY_BRIEFING_TIME, 0L)
+        set(value) = prefs.edit { putLong(KEY_BRIEFING_TIME, value) }
 
     // IDs of severe alerts already notified (dedup background worker)
     var notifiedAlertIds: Set<String>

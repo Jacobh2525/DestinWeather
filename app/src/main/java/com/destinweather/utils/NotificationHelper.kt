@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.destinweather.BriefingActivity
 import com.destinweather.MainActivity
 import com.destinweather.R
 
@@ -93,11 +94,12 @@ object NotificationHelper {
     fun showMorningBriefing(context: Context, title: String, text: String, bigText: String) {
         createBriefingChannel(context) // worker may run before the app ever opened
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        // Tapping opens the popup with the full briefing (stored in prefs)
+        val intent = Intent(context, BriefingActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent, PendingIntent.FLAG_IMMUTABLE
+            context, 1, intent, PendingIntent.FLAG_IMMUTABLE
         )
 
         val builder = NotificationCompat.Builder(context, BRIEFING_CHANNEL_ID)

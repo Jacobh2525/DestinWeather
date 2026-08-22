@@ -21,6 +21,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".BriefingActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
+
         <receiver
             android:name=".widget.WeatherWidgetReceiver"
             android:exported="false">

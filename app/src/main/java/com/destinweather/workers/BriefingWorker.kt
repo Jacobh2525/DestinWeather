@@ -86,6 +86,22 @@ class BriefingWorker(
                     }
                 }.ifBlank { "Tap to open Destin Weather" }
 
+                // Store the FULL briefing (entire discussion) for the tap-to-read popup
+                val fullBody = buildString {
+                    today?.detailedForecast?.let {
+                        append("— Today's Forecast —\n\n")
+                        append(it)
+                    }
+                    if (!afd.isNullOrBlank()) {
+                        if (isNotEmpty()) append("\n\n")
+                        append("— Forecast Discussion —\n\n")
+                        append(afd.trim())
+                    }
+                }
+                PreferencesManager.briefingTitle = title
+                PreferencesManager.briefingBody = fullBody
+                PreferencesManager.briefingTime = System.currentTimeMillis()
+
                 NotificationHelper.showMorningBriefing(applicationContext, title, text, bigText)
                 Result.success()
             }
