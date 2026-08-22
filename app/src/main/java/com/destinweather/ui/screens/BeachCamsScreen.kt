@@ -10,9 +10,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,40 +24,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
-
-// List of Destin/Okaloosa area beach cams (YouTube live stream IDs)
-val beachCams = listOf(
-    BeachCam(
-        name = "Dune Allen Beach Cam",
-        location = "Dune Allen Beach 30a",
-        videoId = "xNZBPxx8ykg"
-    ),
-    BeachCam(
-        name = "Mid-Bay Bridge Cam",
-        location = "Lulu's Destin",
-        videoId = "SLnToeuwLhA"
-    ),
-    BeachCam(
-        name = "Inlet Reef Beach Cam",
-        location = "Destin, Florida",
-        videoId = "DbpGwxabykI"
-    ),
-    BeachCam(
-        name = "Wyndham Garden Beach Cam",
-        location = "Ft. Walton Beach, Florida",
-        videoId = "QnvxSpZ9HPI"
-    )
-)
-
-data class BeachCam(
-    val name: String,
-    val location: String,
-    val videoId: String
-)
+import com.destinweather.data.BeachCam
+import com.destinweather.data.beachCams
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 
 @Composable
 fun BeachCamsScreen() {
+    // One active player at a time; cams that fail (dead ID or dead thumbnail) get flagged
+    var playingCamId by remember { mutableStateOf<String?>(null) }
+    val offlineCams = remember { mutableStateMapOf<String, Boolean>() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -70,41 +52,50 @@ fun BeachCamsScreen() {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
-
         Text(
-            text = "Destin, FL - Tap to watch live",
+            text = "Destin, FL - tap a cam to watch live",
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // List of beach cams
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             items(beachCams) { cam ->
-                BeachCamCard(cam)
+                BeachCamCard(
+                    cam = cam,
+                    isPlaying = playingCamId == cam.videoId,
+                    isOffline = offlineCams[cam.videoId] == true,
+                    onThumbnailError = { offlineCams[cam.videoId] = true },
+                    onPlay = { playingCamId = cam.videoId },
+                    onClose = { playingCamId = null },
+                    onPlayerError = {
+                        offlineCams[cam.videoId] = true
+                        playingCamId = null
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun BeachCamCard(cam: BeachCam) {
+fun BeachCamCard(
+    cam: BeachCam,
+    isPlaying: Boolean,
+    isOffline: Boolean,
+    onThumbnailError: () -> Unit,
+    onPlay: () -> Unit,
+    onClose: () -> Unit,
+    onPlayerError: () -> Unit
+) {
     val context = LocalContext.current
-
-    // YouTube thumbnail URL
-    val thumbnailUrl = "https://img.youtube.com/vi/${cam.videoId}/maxresdefault.jpg"
+    val watchUrl = "https://www.youtube.com/watch?v=${cam.videoId}"
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                // Open YouTube app when tapped
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=${cam.videoId}"))
-                context.startActivity(intent)
-            },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -132,13 +123,12 @@ fun BeachCamCard(cam: BeachCam) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
-                // Live indicator
                 Surface(
-                    color = Color.Red,
+                    color = if (isOffline) Color.Gray else Color.Red,
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = "LIVE",
+                        text = if (isOffline) "OFFLINE" else "LIVE",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         color = Color.White,
                         fontSize = 10.sp,
@@ -149,7 +139,7 @@ fun BeachCamCard(cam: BeachCam) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Thumbnail with play button overlay
+            // Player / thumbnail area
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,40 +148,122 @@ fun BeachCamCard(cam: BeachCam) {
                     .background(Color.Black),
                 contentAlignment = Alignment.Center
             ) {
-                AsyncImage(
-                    model = thumbnailUrl,
-                    contentDescription = "${cam.name} thumbnail",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                when {
+                    // Inline live player
+                    isPlaying && !isOffline -> {
+                        InlinePlayer(videoId = cam.videoId, onPlayerError = onPlayerError)
 
-                // Play button overlay
-                Surface(
-                    modifier = Modifier.size(60.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Play",
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxSize(),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+                        IconButton(
+                            onClick = onClose,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(6.dp)
+                                .size(32.dp)
+                                .background(Color.Black.copy(alpha = 0.55f), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close player",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    // Thumbnail (dimmed if flagged offline)
+                    else -> {
+                        AsyncImage(
+                            model = "https://img.youtube.com/vi/${cam.videoId}/maxresdefault.jpg",
+                            contentDescription = "${cam.name} thumbnail",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                            onError = { onThumbnailError() }
+                        )
+
+                        if (isOffline) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.45f))
+                            )
+                        } else {
+                            // Play button overlay
+                            Surface(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clickable(onClick = onPlay),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play",
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxSize(),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Tap hint
-            Text(
-                text = "Tap to open in YouTube",
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-            )
+            // Status hint / YouTube fallback
+            when {
+                isPlaying && !isOffline -> Text(
+                    text = "Playing live",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                isOffline -> Text(
+                    text = "This cam appears offline - tap to try YouTube",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(watchUrl)))
+                        },
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                else -> Text(
+                    text = "Tap to watch live",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+            }
         }
     }
+}
+
+/** Embedded YouTube live player; plays at the live edge once ready. */
+@Composable
+private fun InlinePlayer(videoId: String, onPlayerError: () -> Unit) {
+    AndroidView(
+        factory = { ctx ->
+            YouTubePlayerView(ctx).apply {
+                addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                    override fun onReady(youTubePlayer: YouTubePlayer) {
+                        youTubePlayer.loadVideo(videoId, 0f)
+                    }
+
+                    override fun onError(
+                        youTubePlayer: YouTubePlayer,
+                        error: PlayerConstants.PlayerError
+                    ) {
+                        onPlayerError()
+                    }
+                })
+            }
+        },
+        onRelease = { it.release() },
+        modifier = Modifier.fillMaxSize()
+    )
 }
